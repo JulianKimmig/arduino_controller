@@ -10,7 +10,7 @@ setup = dict(
     long_description_content_type="text/markdown",
     url="https://github.com/JulianKimmig/arduino_controller",
     packages=setuptools.find_packages(),
-    install_requires=['WsComSrv','pyserial','Json-Dict'],
+    install_requires=['WsComSrv','pyserial','Json-Dict',"numpy"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

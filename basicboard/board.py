@@ -1,6 +1,8 @@
 import time
 from collections import OrderedDict
 
+import numpy as np
+
 from arduino_controller.portcommand import PortCommand
 
 from basicboard import arduino_data, webgui
@@ -64,7 +66,7 @@ class ArduinoBasicBoard:
                 sendtype="?",
                 receivefunction=self.receive_id,
                 byteid=self.firstfreebyteid,
-                arduino_code="identified=data[0];if(!identified){uint64_t id = get_id();write_data(id,{BYTEID});}",
+                arduino_code="identified=data[0];uint64_t id = get_id();write_data(id,{BYTEID});",
             )
         )
         self.add_port_command(
@@ -214,7 +216,7 @@ class ArduinoBasicBoard:
         return None
 
     def receive_id(self, data):
-        self.id = data
+        self.id = int(np.uint64(data))
 
     def receive_fw(self, data):
         self.fw = data

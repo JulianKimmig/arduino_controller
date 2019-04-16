@@ -6,10 +6,6 @@
 #define COMMANDBYTEPOSITION 1
 #define LENBYTEPOSITION 2
 #define DATABYTEPOSITION 3
-#define CMD_IDENTIFY 255
-#define CMD_IDENTIFY_LENGTH 0
-#define CMD_GETFIMWARE 254
-#define CMD_GETFIMWARE_LENGTH 0
 #define MAXFUNCTIONS 3
 #define SERIALARRAYSIZE 13
 #define BAUD 9600
@@ -99,7 +95,9 @@ if(cmd_index != 255){
 uint8_t data[serialread[LENBYTEPOSITION]];
 memcpy(data,&serialread[DATABYTEPOSITION],serialread[LENBYTEPOSITION]);
 cmd_calls[cmd_index](data,serialread[LENBYTEPOSITION]);
-}
+}else{
+  Serial.write(0);
+  }
 }
 }
 uint64_t readloop(){

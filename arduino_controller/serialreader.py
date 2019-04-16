@@ -3,7 +3,7 @@ import time
 import logging
 import serial
 import threading
-from json_dict.json_dict import JsonDict
+from json_dict import JsonDict
 from websocket_communication_server.messagetemplates import commandmessage, levelmessage, datapointmessage
 from websocket_communication_server.socketclient import WebSocketClient
 from websocket_communication_server.socketserver import connect_to_first_free_port
@@ -61,8 +61,9 @@ class SerialPort(serial.Serial):
             return
         self.logger.info("port found " + self.port)
         connected_ports.add(self)
-        self.ws = WebSocketClient(name=port,logger=self.logger,host=host)
+        self.ws = WebSocketClient(name=str(port),logger=self.logger,host=host)
         self.ws.add_cmd_function("update",self.update)
+        self.ws.add_cmd_function("boardfunction",self.boardfunction)
 
         def add_data_target(data_target=None):
             if data_target is not None:
@@ -83,6 +84,12 @@ class SerialPort(serial.Serial):
         else:
             self.set_board(ArduinoBasicBoard)
 
+    def boardfunction(self,board_cmd,**kwargs):
+        try:
+            getattr(self.board,board_cmd)(**kwargs)
+        except:
+            self.logger.exception(Exception)
+
     def data_to_socket(self, key, y, x=None):
         t = time.time() - self.ws.time
         if x is None:
@@ -100,6 +107,7 @@ class SerialPort(serial.Serial):
     def set_board(self, BoardClass):
         self.board = BoardClass()
         self.board.set_serial_port(self)
+        time.sleep(2)
         self.board.identify()
 
         if not self.board.identified:

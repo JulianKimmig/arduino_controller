@@ -12,11 +12,7 @@ BOARDS = {}
 
 
 def board_by_firmware(firmware):
-    for fw, board in BOARDS.items():
-        if fw == firmware:
-            return board
-    return None
-
+    return BOARDS.get(firmware,None)
 
 def parse_path_for_boards(path):
     global BOARDS

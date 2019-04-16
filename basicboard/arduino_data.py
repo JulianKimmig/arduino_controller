@@ -1,5 +1,7 @@
+
+
 def definitions(self):
-    from portreader.portrequest import DATABYTEPOSITION
+    from arduino_controller.portrequest import DATABYTEPOSITION
     return {
         'STARTANALOG': 0,
         'ENDANALOG': 100,
@@ -10,10 +12,6 @@ def definitions(self):
         'COMMANDBYTEPOSITION': 1,
         'LENBYTEPOSITION': 2,
         'DATABYTEPOSITION': 3,
-        'CMD_IDENTIFY': 255,
-        'CMD_IDENTIFY_LENGTH': 0,
-        'CMD_GETFIMWARE': 254,
-        'CMD_GETFIMWARE_LENGTH': 0,
         'MAXFUNCTIONS': str(len(self.portcommands)),
         'SERIALARRAYSIZE': str(
             DATABYTEPOSITION
