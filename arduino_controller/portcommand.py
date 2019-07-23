@@ -1,7 +1,7 @@
 import re
 import struct
 
-from arduino_controller.portrequest import generate_port_message
+from .portrequest import generate_port_message
 
 
 class PortCommand:
@@ -20,7 +20,9 @@ class PortCommand:
         self.module = module
 
         self.sendlength = struct.calcsize(sendtype) if sendtype is not None else 0
-        self.receivelength = struct.calcsize(receivetype) if receivetype is not None else 0
+        self.receivelength = (
+            struct.calcsize(receivetype) if receivetype is not None else 0
+        )
 
         self.sendtype = sendtype
         self.receivetype = receivetype
@@ -32,7 +34,7 @@ class PortCommand:
         self.receivefunction = receivefunction
         self.name = re.sub(r"\s+", "", name, flags=re.UNICODE)
         if byteid == None:
-            byteid = module.firstfreebyteid
+            byteid = module.first_free_byte_id
         self.byteid = byteid
         self.arduino_code = ""
         self.set_arduino_code(arduino_code)
@@ -50,9 +52,10 @@ class PortCommand:
             data = bytearray()
         else:
             data = struct.pack(self.sendtype, numericaldata)
-        self.module.serialport.write(
+        self.module.serial_port.write(
             bytearray(generate_port_message(self.byteid, self.sendlength, *data))
         )
 
     def receive(self, bytearray):
-        self.receivefunction(struct.unpack(self.receivetype, bytearray)[0])
+        #print(self.receivetype,bytearray)
+        self.receivefunction(self.module,struct.unpack(self.receivetype, bytearray)[0])

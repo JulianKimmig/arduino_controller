@@ -33,16 +33,16 @@ def generate_request(command, data):
 
 def validate_buffer(port):
     try:
-        firststart = port.readbuffer.index(STARTBYTE)
+        firststart = port.read_buffer.index(STARTBYTE)
     except ValueError:
         firststart = 0
-        port.readbuffer = []
+        port.read_buffer = []
 
-    bufferlength = len(port.readbuffer[firststart:])
+    bufferlength = len(port.read_buffer[firststart:])
     if bufferlength >= DATABYTEPOSITION + 2:
-        datalength = ord(port.readbuffer[firststart + LENBYTEPOSITION])
+        datalength = ord(port.read_buffer[firststart + LENBYTEPOSITION])
         if bufferlength >= DATABYTEPOSITION + datalength + 2:
-            databuffer = port.readbuffer[
+            databuffer = port.read_buffer[
                 firststart
                 + DATABYTEPOSITION : firststart
                 + DATABYTEPOSITION
@@ -51,7 +51,7 @@ def validate_buffer(port):
             checksum, = struct.unpack(
                 ">H",
                 b"".join(
-                    port.readbuffer[
+                    port.read_buffer[
                         firststart
                         + DATABYTEPOSITION
                         + datalength : firststart
@@ -62,12 +62,12 @@ def validate_buffer(port):
                 ),
             )
             if checksum == generate_checksum(
-                port.readbuffer[firststart : firststart + DATABYTEPOSITION + datalength]
+                port.read_buffer[firststart : firststart + DATABYTEPOSITION + datalength]
             ):
                 port.board.receive_from_port(
-                    cmd=ord(port.readbuffer[firststart + COMMANDBYTEPOSITION]),
+                    cmd=ord(port.read_buffer[firststart + COMMANDBYTEPOSITION]),
                     data=b"".join(databuffer),
                 )
-            port.readbuffer = port.readbuffer[
+            port.read_buffer = port.read_buffer[
                 firststart + DATABYTEPOSITION + datalength + 2 :
             ]

@@ -1,4 +1,4 @@
-from basicboard.defaultcodes import DEFAULTCODES
+from . import defaultcodes
 
 
 class Pin:
@@ -11,9 +11,13 @@ class Pin:
         self.pintype = pintype
 
         if pintype == self.DIGITAL_OUT:
-            self.portcommand.set_arduino_code(DEFAULTCODES["setpin_output"])
+            self.portcommand.set_arduino_code(
+                defaultcodes.DEFAULTCODES["setpin_output"]
+            )
         else:
-            self.portcommand.set_arduino_code(DEFAULTCODES["setpin_output"])
+            self.portcommand.set_arduino_code(
+                defaultcodes.DEFAULTCODES["setpin_output"]
+            )
 
     def arduinoMode(self):
         if self.pintype == self.DIGITAL_OUT:
@@ -23,5 +27,3 @@ class Pin:
 
     def to_json(self):
         return self.position
-
-

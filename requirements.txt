@@ -1,0 +1,5 @@
+Json-Dict
+FilterDict
+pyseria
+numpy
+pandas

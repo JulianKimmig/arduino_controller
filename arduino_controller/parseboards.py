@@ -4,17 +4,18 @@ import glob
 import importlib.util
 import inspect
 import os
-from os.path import isfile, basename
+from os.path import basename
 
-from basicboard.board import ArduinoBasicBoard
+from .basicboard.board import ArduinoBasicBoard
 
 BOARDS = {}
 
 
 def board_by_firmware(firmware):
-    return BOARDS.get(firmware,None)
+    return BOARDS.get(firmware, None)
 
-def parse_path_for_boards(path):
+
+def parse_path_for_boards(path,prefix=""):
     global BOARDS
     dir_path = path
 
@@ -24,11 +25,12 @@ def parse_path_for_boards(path):
         if os.path.isdir(p) and not p.endswith("__")
     ]
     loaded_firmwares = set()
+    prefix = prefix+os.path.basename(path)+"."
     for boardfolder in boardsfolders:
         boardpy = os.path.join(boardfolder, "board.py")
         if os.path.exists(boardpy):
             spec = importlib.util.spec_from_file_location(
-                "board." + basename(boardfolder), os.path.join(boardfolder, "board.py")
+                "board." + prefix + basename(boardfolder), os.path.join(boardfolder, "board.py")
             )
             foo = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(foo)
@@ -37,11 +39,24 @@ def parse_path_for_boards(path):
                     try:
                         fw = getattr(obj, "FIRMWARE")
                         if fw not in loaded_firmwares:
-                            BOARDS[fw] = {"firmware": fw, "classcaller": obj, "name": name}
+                            BOARDS[fw] = {
+                                "firmware": fw,
+                                "classcaller": obj,
+                                "name": name,
+                            }
                             loaded_firmwares.add(fw)
                     except:
                         pass
+        else:
+            parse_path_for_boards(boardfolder,prefix=prefix)
+    #print(path)
+    #print(BOARDS)
 
 
 parse_path_for_boards(
-    os.path.dirname(os.path.dirname(os.path.abspath(sys.modules[ArduinoBasicBoard.__module__].__file__))))
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(sys.modules[ArduinoBasicBoard.__module__].__file__)
+        )
+    )
+)
