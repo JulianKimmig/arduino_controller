@@ -1,6 +1,6 @@
 import struct
 
-STARTBYTE = bytes([2])
+STARTBYTE = b'\x02'
 STARTBYTEPOSITION = 0
 COMMANDBYTEPOSITION = 1
 LENBYTEPOSITION = 2
@@ -32,6 +32,7 @@ def generate_request(command, data):
 
 
 def validate_buffer(port):
+    #print(port.read_buffer)
     try:
         firststart = port.read_buffer.index(STARTBYTE)
     except ValueError:
@@ -61,6 +62,7 @@ def validate_buffer(port):
                     ]
                 ),
             )
+
             if checksum == generate_checksum(
                 port.read_buffer[firststart : firststart + DATABYTEPOSITION + datalength]
             ):

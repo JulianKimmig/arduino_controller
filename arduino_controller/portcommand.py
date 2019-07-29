@@ -1,6 +1,8 @@
 import re
 import struct
 
+import numpy as np
+
 from .portrequest import generate_port_message
 
 
@@ -9,20 +11,17 @@ class PortCommand:
         self,
         module,
         name,
-        byteid=None,
         receivetype=None,
         sendtype=None,
         receivefunction=None,
         sendfunction=None,
-        arduino_code=None,
+        arduino_function=None,
     ):
-        global FIRSTFREEBYTEID
+
         self.module = module
 
-        self.sendlength = struct.calcsize(sendtype) if sendtype is not None else 0
-        self.receivelength = (
-            struct.calcsize(receivetype) if receivetype is not None else 0
-        )
+        self.sendlength = np.array([sendtype]).itemsize
+        self.receivelength = np.array([receivetype]).itemsize
 
         self.sendtype = sendtype
         self.receivetype = receivetype
@@ -33,19 +32,16 @@ class PortCommand:
         self.sendfunction = sendfunction
         self.receivefunction = receivefunction
         self.name = re.sub(r"\s+", "", name, flags=re.UNICODE)
-        if byteid == None:
-            byteid = module.first_free_byte_id
-        self.byteid = byteid
-        self.arduino_code = ""
-        self.set_arduino_code(arduino_code)
+        self.byteid =  module.first_free_byte_id
+        print(arduino_function)
+        arduino_function.byte_id=self.byteid
+        self.set_arduino_function(arduino_function)
 
-    def set_arduino_code(self, arduino_code):
-        if arduino_code is not None:
-            self.arduino_code = arduino_code.replace(
-                "{BYTEID}", str(self.byteid)
-            ).replace("{NAME}", str(self.name))
+    def set_arduino_function(self, arduino_function):
+        if arduino_function is not None:
+            self.arduino_function = arduino_function
         else:
-            self.arduino_code = ""
+            self.arduino_function = ""
 
     def defaultsendfunction(self, numericaldata=None):
         if numericaldata is None:

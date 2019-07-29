@@ -154,6 +154,7 @@ class SerialPort(serial.Serial):
             raise PortIdentifyError()
 
         if self.board.FIRMWARE != self.board.firmware:
+            self.logger.warning("firmware detected  {}".format(self.board.firmware))
             newb = board_by_firmware(self.board.firmware)
             if newb is not None:
                 return self.set_board(newb["classcaller"])
@@ -220,6 +221,7 @@ class SerialPort(serial.Serial):
                 c = self.read()
 
                 while len(c) > 0:
+                    #print(ord(c))
                     self.read_buffer.append(c)
                     validate_buffer(self)
                     c = self.read()

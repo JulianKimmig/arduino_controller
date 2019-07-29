@@ -9,7 +9,7 @@ class ModuleVarianbleStruct:
                  html_attributes=None, default_value=0):
         if html_attributes is None:
             html_attributes = dict()
-        self.default_value = default_value
+        self.value = default_value
         self.html_attributes = html_attributes
         self.html_input = html_input
         self.python_type = python_type
@@ -18,14 +18,14 @@ class ModuleVarianbleStruct:
 
 
 class ModuleVariable():
-    def __init__(self, name, type, html_input=None, var_structure=None, save=True,
+    def __init__(self, name, python_type, html_input=None, var_structure=None, save=True,
                  getter=None, setter=None, default=None, minimum=None, maximum=None,
-                 python_type=None, is_data_point=False, allowed_values=None, is_global_var=True,
+                 is_data_point=False, allowed_values=None, is_global_var=True,
                  nullable=False,changeable=None
                  ):
 
         self.name = str(name)
-        self.type = type
+        self.python_type = python_type
         self.save = save
         self.is_data_point = is_data_point
         self.html_input = html_input
@@ -41,15 +41,13 @@ class ModuleVariable():
             assert isinstance(var_structure,ModuleVarianbleStruct), "var_structure not of class ModuleVarianbleStruct"
             self.var_structure = var_structure
         else:
-            try:
-                self.var_structure = self.structure_list.get(type)
-            except AttributeError:
-                raise StrucTypeNotFoundException(
-                    'Struct equivalent not found for ' + str(type) + ' please define manually')
-
-        self.default = self.var_structure.default_value if default is None else default
-
-        self.python_type = self.var_structure.python_type if python_type is None else python_type
+            self.var_structure = self.structure_list.get(python_type)
+            if self.var_structure is None:
+                self.var_structure = self.structure_list.get(str(python_type))
+                if self.var_structure is None:
+                    raise StrucTypeNotFoundException(
+                        'Struct equivalent not found for {}({}) please define manually'.format(name,python_type))
+        self.default = 0 if default is None else default
 
         self.maximum = self.var_structure.maximum if maximum is None else maximum
         self.minimum = self.var_structure.minimum if minimum is None else minimum
@@ -121,7 +119,6 @@ class ModuleVariable():
         return html_input
 
     def get_html_input(self):
-        print(self.attributes)
         return self.attributes.get("html_input", self._generate_html_input())
 
     def set_html_input(self, html_input):
