@@ -1,6 +1,6 @@
-import struct
+import numpy as np
 
-STARTBYTE = b'\x02'
+STARTBYTE = b"\x02"
 STARTBYTEPOSITION = 0
 COMMANDBYTEPOSITION = 1
 LENBYTEPOSITION = 2
@@ -8,31 +8,30 @@ DATABYTEPOSITION = 3
 
 
 def generate_checksum(array):
-    try:
-        array = [ord(i) for i in array]
-    except:
-        pass
-    sum1 = 0
-    sum2 = 0
-    for i in array:
-        sum1 = (sum1 + i) % 255
-        sum2 = (sum2 + sum1) % 255
-    return sum2 * 256 + sum1
+    sum1 = np.uint8(0)
+    sum2 = np.uint8(0)
+    for i in np.array(array, dtype=np.uint8):
+        sum1 = sum1 + i
+        sum2 = sum2 + sum1
+    return sum2 * np.uint16(256) + sum1
 
 
 def generate_port_message(cmd, datalength, *args):
+    # print("W: ",cmd,datalength,args)
     assert len(args) >= datalength
     return generate_request(cmd, args[:datalength])
 
 
 def generate_request(command, data):
     a = [2, command, len(data), *data]
-    a.extend(struct.pack(">H", generate_checksum(a)))
+    # print(generate_checksum(a))
+    a.extend(generate_checksum(a).tobytes())
+    # print(bytearray(a))
     return bytearray(a)
 
 
 def validate_buffer(port):
-    #print(port.read_buffer)
+    # print(port.read_buffer)
     try:
         firststart = port.read_buffer.index(STARTBYTE)
     except ValueError:
@@ -44,31 +43,29 @@ def validate_buffer(port):
         datalength = ord(port.read_buffer[firststart + LENBYTEPOSITION])
         if bufferlength >= DATABYTEPOSITION + datalength + 2:
             databuffer = port.read_buffer[
+                firststart : firststart + DATABYTEPOSITION + datalength
+            ]
+            checksumbuffer = port.read_buffer[
                 firststart
-                + DATABYTEPOSITION : firststart
+                + DATABYTEPOSITION
+                + datalength : firststart
                 + DATABYTEPOSITION
                 + datalength
+                + 2
             ]
-            checksum, = struct.unpack(
-                ">H",
-                b"".join(
-                    port.read_buffer[
-                        firststart
-                        + DATABYTEPOSITION
-                        + datalength : firststart
-                        + DATABYTEPOSITION
-                        + datalength
-                        + 2
-                    ]
-                ),
-            )
-
-            if checksum == generate_checksum(
-                port.read_buffer[firststart : firststart + DATABYTEPOSITION + datalength]
-            ):
+            # print(databuffer)
+            # print(checksumbuffer)
+            databuffer = np.array([ord(i) for i in databuffer], dtype=np.uint8)
+            checksumbuffer = np.array([ord(i) for i in checksumbuffer], dtype=np.uint8)
+            # print(databuffer)
+            # print(checksumbuffer)
+            checksum = np.frombuffer(checksumbuffer, dtype=np.uint16)[0]
+            generated_cs = generate_checksum(databuffer)
+            # print("cs: ",checksum,generated_cs)
+            if checksum == generated_cs:
                 port.board.receive_from_port(
-                    cmd=ord(port.read_buffer[firststart + COMMANDBYTEPOSITION]),
-                    data=b"".join(databuffer),
+                    cmd=databuffer[COMMANDBYTEPOSITION],
+                    data=b"".join(databuffer[DATABYTEPOSITION:]),
                 )
             port.read_buffer = port.read_buffer[
                 firststart + DATABYTEPOSITION + datalength + 2 :

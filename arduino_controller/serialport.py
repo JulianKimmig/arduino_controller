@@ -42,36 +42,32 @@ class FirmwareNotFoundError(Exception):
     pass
 
 
-class SerialPortDataTarget():
+class SerialPortDataTarget:
     def __init__(self):
         pass
-    def port_data_point(self,key,x,y,port,board):
+
+    def port_data_point(self, key, x, y, port, board):
         pass
 
-    def port_identified(self,port):
+    def port_identified(self, port):
         pass
 
-    def board_update(self,board_data):
+    def board_update(self, board_data):
         pass
 
-    def port_opened(self,port,baud):
+    def port_opened(self, port, baud):
         pass
 
-    def port_closed(self,port):
+    def port_closed(self, port):
         pass
 
-    def set_board(self,port,board):
+    def set_board(self, port, board):
         pass
+
 
 class SerialPort(serial.Serial):
     def __init__(
-            self,
-            serial_reader,
-            port,
-            config=None,
-            logger=None,
-            baudrate=9600,
-            **kwargs,
+        self, serial_reader, port, config=None, logger=None, baudrate=9600, **kwargs
     ):
 
         self.serial_reader = serial_reader
@@ -103,7 +99,9 @@ class SerialPort(serial.Serial):
         self.to_write = []
         self.start_read()
 
-        newb = board_by_firmware(config.get("portdata", self.port, "firmware", default=0))
+        newb = board_by_firmware(
+            config.get("portdata", self.port, "firmware", default=0)
+        )
         if newb is not None:
             self.set_board(newb["classcaller"])
         else:
@@ -132,13 +130,16 @@ class SerialPort(serial.Serial):
 
     def add_data_point(self, board, key, y, x=None):
 
-        t = int(1000*(time.time() - self.time)/self.datapoint_resolution)*self.datapoint_resolution
+        t = (
+            int(1000 * (time.time() - self.time) / self.datapoint_resolution)
+            * self.datapoint_resolution
+        )
         if x is None:
             x = t
         for data_target in self.data_targets:
             filter_dict.call_method(
                 target=data_target.port_data_point,
-                kwargs=dict(key=key, x=x, y=y, port=board.port, board = board.id)
+                kwargs=dict(key=key, x=x, y=y, port=board.port, board=board.id),
             )
 
     def set_board(self, board_class):
@@ -185,7 +186,9 @@ class SerialPort(serial.Serial):
         self.board.get_portcommand_by_name("identify").sendfunction(True)
 
         for data_target in self.serial_reader.data_targets:
-            filter_dict.call_method(data_target.port_identified, kwargs={'port': self.port})
+            filter_dict.call_method(
+                data_target.port_identified, kwargs={"port": self.port}
+            )
         return True
 
     def board_updater(self):
@@ -199,13 +202,10 @@ class SerialPort(serial.Serial):
             if self.board.identified:
                 data = self.board.save()
                 self.config.put("board_data", self.board.id, value=data)
-                data['firmware'] = self.board.firmware
-                data['id'] = self.board.id
-                data['class'] = self.board.CLASSNAME
-                msg_d = dict(
-                    board_data=data,
-                    **kwargs,
-                )
+                data["firmware"] = self.board.firmware
+                data["id"] = self.board.id
+                data["class"] = self.board.CLASSNAME
+                msg_d = dict(board_data=data, **kwargs)
 
                 for data_target in self.data_targets:
                     filter_dict.call_method(data_target.board_update, kwargs=msg_d)
@@ -221,29 +221,29 @@ class SerialPort(serial.Serial):
                 c = self.read()
 
                 while len(c) > 0:
-                    #print(ord(c))
+                    # print(ord(c),c)
                     self.read_buffer.append(c)
                     validate_buffer(self)
                     c = self.read()
-            #except serial.serialutil.SerialException as e:
+            # except serial.serialutil.SerialException as e:
             #    self.logger.exception(e)
-            #except AttributeError:
+            # except AttributeError:
             #    break
             except Exception as e:
                 self.logger.exception(e)
                 break
             time.sleep(PORT_READ_TIME)
-            #print(self.is_open)
+            # print(self.is_open)
         self.logger.error("work_port stopped")
         self.stop_read()
 
     def start_read(self):
         self.logger.info("port opened " + self.port)
         for data_target in self.serial_reader.data_targets:
-            filter_dict.call_method(data_target.port_opened, kwargs={
-                'port': self.port,
-                'baud': self.baudrate}
-                                    )
+            filter_dict.call_method(
+                data_target.port_opened,
+                kwargs={"port": self.port, "baud": self.baudrate},
+            )
 
         if not self.is_open:
             self.open()
@@ -270,7 +270,7 @@ class SerialPort(serial.Serial):
         self.update_thread = None
         self.logger.info("port closed " + self.port)
         for data_target in self.serial_reader.data_targets:
-            filter_dict.call_method(data_target.port_closed, kwargs={'port': self.port})
+            filter_dict.call_method(data_target.port_closed, kwargs={"port": self.port})
 
         if self in self.serial_reader.connected_ports:
             self.serial_reader.connected_ports.remove(self)
@@ -288,9 +288,9 @@ class SerialPort(serial.Serial):
         if data_target is None:
             return
         board = self.board.get_board()
-        filter_dict.call_method(data_target.set_board, kwargs={
-            'port': self.port,
-            'board': board})
+        filter_dict.call_method(
+            data_target.set_board, kwargs={"port": self.port, "board": board}
+        )
 
 
 def open_serial_port(**kwargs):

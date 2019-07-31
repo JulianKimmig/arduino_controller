@@ -1,5 +1,9 @@
 import setuptools
 
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
+
+
 setup = dict(
     name="ArduinoController",
     version="0.1",
@@ -10,7 +14,7 @@ setup = dict(
     long_description_content_type="text/markdown",
     url="https://github.com/JulianKimmig/arduino_controller",
     packages=setuptools.find_packages(),
-    install_requires=['WsComSrv','pyserial','Json-Dict',"numpy"],
+    install_requires=required,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

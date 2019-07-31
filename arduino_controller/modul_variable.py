@@ -1,12 +1,20 @@
-import collections
+import numpy as np
 
 
-class StrucTypeNotFoundException(Exception): pass
+class StrucTypeNotFoundException(Exception):
+    pass
 
 
 class ModuleVarianbleStruct:
-    def __init__(self, minimum=None, maximum=None, python_type=int, html_input='number',
-                 html_attributes=None, default_value=0):
+    def __init__(
+        self,
+        minimum=None,
+        maximum=None,
+        python_type=int,
+        html_input="number",
+        html_attributes=None,
+        default_value=0,
+    ):
         if html_attributes is None:
             html_attributes = dict()
         self.value = default_value
@@ -17,12 +25,48 @@ class ModuleVarianbleStruct:
         self.minimum = minimum
 
 
-class ModuleVariable():
-    def __init__(self, name, python_type, html_input=None, var_structure=None, save=True,
-                 getter=None, setter=None, default=None, minimum=None, maximum=None,
-                 is_data_point=False, allowed_values=None, is_global_var=True,
-                 nullable=False,changeable=None
-                 ):
+DEFAULT_STRUCTURES = {
+    **{
+        nptype: ModuleVarianbleStruct(
+            minimum=np.iinfo(nptype).min,
+            maximum=np.iinfo(nptype).max,
+            python_type=nptype,
+            html_input="number",
+        )
+        for nptype in [
+            np.int8,
+            np.int16,
+            np.int32,
+            np.int64,
+            np.uint8,
+            np.uint16,
+            np.uint32,
+            np.uint64,
+        ]
+    },
+    bool: ModuleVarianbleStruct(python_type=bool, html_input="checkbox"),
+}
+
+
+class ModuleVariable:
+    def __init__(
+        self,
+        name,
+        python_type,
+        html_input=None,
+        var_structure=None,
+        save=True,
+        getter=None,
+        setter=None,
+        default=None,
+        minimum=None,
+        maximum=None,
+        is_data_point=False,
+        allowed_values=None,
+        is_global_var=True,
+        nullable=False,
+        changeable=None,
+    ):
 
         self.name = str(name)
         self.python_type = python_type
@@ -33,12 +77,15 @@ class ModuleVariable():
         self.is_global_var = is_global_var
         self.nullable = nullable
         self.attributes = {}
+        self.return_self = False
 
         if not hasattr(self, "structure_list"):
-            self.structure_list = {}
+            self.structure_list = DEFAULT_STRUCTURES
 
         if var_structure is not None:
-            assert isinstance(var_structure,ModuleVarianbleStruct), "var_structure not of class ModuleVarianbleStruct"
+            assert isinstance(
+                var_structure, ModuleVarianbleStruct
+            ), "var_structure not of class ModuleVarianbleStruct"
             self.var_structure = var_structure
         else:
             self.var_structure = self.structure_list.get(python_type)
@@ -46,23 +93,39 @@ class ModuleVariable():
                 self.var_structure = self.structure_list.get(str(python_type))
                 if self.var_structure is None:
                     raise StrucTypeNotFoundException(
-                        'Struct equivalent not found for {}({}) please define manually'.format(name,python_type))
+                        "Struct equivalent not found for {}({}) please define manually".format(
+                            name, python_type
+                        )
+                    )
         self.default = 0 if default is None else default
 
         self.maximum = self.var_structure.maximum if maximum is None else maximum
         self.minimum = self.var_structure.minimum if minimum is None else minimum
 
         self.value = self.default
-        self.setter = None if setter is False else (self.default_setter if setter is None else setter)
-        self.getter = None if setter is False else (self.default_getter if getter is None else getter)
-        self.changeable = changeable if changeable is not None else (False if self.setter is None else True)
+        self.setter = (
+            None
+            if setter is False
+            else (self.default_setter if setter is None else setter)
+        )
+        self.getter = (
+            None
+            if setter is False
+            else (self.default_getter if getter is None else getter)
+        )
+        self.changeable = (
+            changeable
+            if changeable is not None
+            else (False if self.setter is None else True)
+        )
 
     def default_getter(self, instance):
         return self.value
 
     @staticmethod
     def default_setter(var, instance, data):
-        if data is None and not var.nullable: return
+        if data is None and not var.nullable:
+            return
         if data is not None:
             data = var.python_type(data)
 
@@ -74,44 +137,91 @@ class ModuleVariable():
 
         if data is not None:
             if var.minimum is not None:
-                if data < var.minimum: data = var.minimum
+                if data < var.minimum:
+                    data = var.minimum
             if var.maximum is not None:
-                if data > var.maximum: data = var.maximum
+                if data > var.maximum:
+                    data = var.maximum
 
         var.value = data
         if var.is_data_point:
             instance.data_point(var.name, data)
         return data
 
-    def __set__(self, instance, value):
+    def set_value(self, instance, value):
         self.setter(var=self, instance=instance, data=value)
 
-    def __get__(self, instance, owner):
+    def get_value(self, instance, owner):
+        if self.return_self or self.getter is None:
+            return self
         return self.getter(instance)
 
     def _generate_html_input(self):
         if self.changeable:
             if self.allowed_values is not None:
-                html_input = '<select name="' + self.name + '" ' + ' '.join(
-                    [str(key) + '="' + str(val) + '"' for key, val in self.var_structure.html_attributes.items()]) + ' >' + \
-                             ''.join(['<option value="' + str(allowed) + '" ' + str(
-                                 " selected" if allowed == self.value else "") + '>' + str(
-                                 self.allowed_values[allowed] if isinstance(self.allowed_values,
-                                                                            dict) else allowed) + '</option>' for
-                                      allowed in self.allowed_values]) + \
-                             '</select>'
+                html_input = '<select name="{}" {}>{}</select>'.format(
+                    self.name,
+                    " ".join(
+                        [
+                            str(key) + '="' + str(val) + '"'
+                            for key, val in self.var_structure.html_attributes.items()
+                        ]
+                    ),
+                    "".join(
+                        [
+                            '<option value="{}" {}>{}</option>'.format(
+                                allowed_value,
+                                " selected" if allowed_value == self.value else "",
+                                self.allowed_values[allowed_value]
+                                if isinstance(self.allowed_values, dict)
+                                else allowed_value,
+                            )
+                            for allowed_value in self.allowed_values
+                        ]
+                    ),
+                )
+                # + str(
+                #                     self.allowed_values[allowed] if isinstance(self.allowed_values, dict) else allowed) +
+
+            #    html_input = '<select name="' + self.name + '" ' + ' '.join(
+            #        [str(key) + '="' + str(val) + '"' for key, val in self.var_structure.html_attributes.items()]) + ' >' + \
+            #                 ''.join(['<option value="' + str(allowed) + '" ' + str(
+            #                     " selected" if allowed == self.value else "") + '>' + str(
+            #                     self.allowed_values[allowed] if isinstance(self.allowed_values,
+            #                                                                dict) else allowed) + '</option>' for
+            #                          allowed in self.allowed_values]) + \
+            #                  '</select>'
             else:
-                html_input = '<input type="' + self.var_structure.html_input + '" min="' + str(self.minimum) + '" max="' + str(
-                    self.maximum) + '" name="modul_variable_input_' + self.name + '" value="{{value}}" ' + ' '.join(
-                    [str(key) + '="' + str(val) + '"' for key, val in self.var_structure.html_attributes.items()]) + (
-                                 ' readonly' if self.setter is None else '') + '>'
+                html_input = (
+                    '<input type="'
+                    + self.var_structure.html_input
+                    + '" min="'
+                    + str(self.minimum)
+                    + '" max="'
+                    + str(self.maximum)
+                    + '" name="modul_variable_input_'
+                    + self.name
+                    + '" value="{{value}}" '
+                    + " ".join(
+                        [
+                            str(key) + '="' + str(val) + '"'
+                            for key, val in self.var_structure.html_attributes.items()
+                        ]
+                    )
+                    + (" readonly" if self.setter is None else "")
+                    + ">"
+                )
         else:
             html_input = ""
 
         if self.is_data_point:
             html_input += (
-                    '<input type=' + self.var_structure.html_input + ' name="data_point_' + self.name + '" value="{{value}}">').replace(
-                ">", ' readonly>')
+                "<input type="
+                + self.var_structure.html_input
+                + ' name="data_point_'
+                + self.name
+                + '" value="{{value}}">'
+            ).replace(">", " readonly>")
 
         if self.allowed_values is None:
             self.attributes["html_input"] = html_input

@@ -5,42 +5,42 @@ import time
 
 import filter_dict
 from json_dict import JsonDict
-
-# from ..datalogger import DataLogger
 from ..serialreader import serialdetector
 
 AUTO_CHECK_PORTS = True
 PORT_CHECK_TIME = 2
 DATAPOINT_RESOLUTION = 200
-class SerialReaderDataTarget():
+
+
+class SerialReaderDataTarget:
     def __init__(self):
         pass
 
-    def set_ports(self,available_ports, ignored_ports,connected_ports,identified_ports):
+    def set_ports(
+        self, available_ports, ignored_ports, connected_ports, identified_ports
+    ):
         pass
 
-    def port_identified(self,port):
+    def port_identified(self, port):
         pass
 
-    def port_opened(self,port,baud):
+    def port_opened(self, port, baud):
         pass
 
-    def port_closed(self,port):
+    def port_closed(self, port):
         pass
+
 
 class SerialReader:
     def __init__(
-            self,
-            auto_check_ports=AUTO_CHECK_PORTS,
-            port_check_time=PORT_CHECK_TIME,
-            start_in_background=False,
-
-            config: JsonDict = None,
-            logger=None,
-
-            permanently_ignored_ports=None,
-            # datalogger: DataLogger = None,
-
+        self,
+        auto_check_ports=AUTO_CHECK_PORTS,
+        port_check_time=PORT_CHECK_TIME,
+        start_in_background=False,
+        config: JsonDict = None,
+        logger=None,
+        permanently_ignored_ports=None,
+        # datalogger: DataLogger = None,
     ):
 
         self.data_targets = set()
@@ -53,7 +53,15 @@ class SerialReader:
 
         # self.datalogger = DataLogger() if datalogger is None else datalogger
 
-        self.config = JsonDict(os.path.join(os.path.expanduser("~"), ".arduino_controller","portdata.json")) if config is None else config
+        self.config = (
+            JsonDict(
+                os.path.join(
+                    os.path.expanduser("~"), ".arduino_controller", "portdata.json"
+                )
+            )
+            if config is None
+            else config
+        )
 
         if permanently_ignored_ports is None:
             permanently_ignored_ports = []
@@ -69,7 +77,7 @@ class SerialReader:
         if start_in_background:
             self.run_in_background()
 
-    def get_identified_by_port(self,port):
+    def get_identified_by_port(self, port):
         for sp in self.identified_ports:
             if sp.port == port:
                 return sp
@@ -81,12 +89,18 @@ class SerialReader:
     def reactivate_port(self, port=None):
         if port is None:
             return
-        try: self.ignored_ports.remove(port)
-        except: pass
-        try: self.permanently_ignored_ports.remove(port)
-        except: pass
-        try: self.dead_ports.remove(port)
-        except: pass
+        try:
+            self.ignored_ports.remove(port)
+        except:
+            pass
+        try:
+            self.permanently_ignored_ports.remove(port)
+        except:
+            pass
+        try:
+            self.dead_ports.remove(port)
+        except:
+            pass
 
     def deactivate_port(self, port=None):
         if port is None:
@@ -112,7 +126,8 @@ class SerialReader:
             self.data_targets.remove(data_target)
 
     def send_ports(self, data_target=None):
-        if data_target is None: data_target = self.data_targets
+        if data_target is None:
+            data_target = self.data_targets
 
         if not isinstance(data_target, set):
             data_target = set(data_target)
@@ -120,10 +135,20 @@ class SerialReader:
         for data_target in data_target:
             filter_dict.call_method(
                 target=data_target.set_ports,
-                kwargs=dict(available_ports=list(self.available_ports),
-                            ignored_ports=list(self.ignored_ports | self.permanently_ignored_ports),
-                            connected_ports=[dict(port=sp.port, baudrate=sp.baudrate) for sp in self.connected_ports],
-                            identified_ports=[dict(port=sp.port, baudrate=sp.baudrate) for sp in self.identified_ports], )
+                kwargs=dict(
+                    available_ports=list(self.available_ports),
+                    ignored_ports=list(
+                        self.ignored_ports | self.permanently_ignored_ports
+                    ),
+                    connected_ports=[
+                        dict(port=sp.port, baudrate=sp.baudrate)
+                        for sp in self.connected_ports
+                    ],
+                    identified_ports=[
+                        dict(port=sp.port, baudrate=sp.baudrate)
+                        for sp in self.identified_ports
+                    ],
+                ),
             )
 
     get_ports = send_ports
@@ -132,12 +157,15 @@ class SerialReader:
         while 1:
             if self.auto_check_ports:
                 self.available_ports, self.ignored_ports = serialdetector.get_avalable_serial_ports(
-                    ignore=self.ignored_ports | self.permanently_ignored_ports #| set(
-                       # [sp.port for sp in self.connected_ports])
+                    ignore=self.ignored_ports
+                    | self.permanently_ignored_ports  # | set(
+                    # [sp.port for sp in self.connected_ports])
                 )
                 self.dead_ports = self.available_ports.intersection(self.dead_ports)
                 newports = self.available_ports - (
-                        self.ignored_ports | self.dead_ports | self.permanently_ignored_ports
+                    self.ignored_ports
+                    | self.dead_ports
+                    | self.permanently_ignored_ports
                 )
                 self.logger.debug(
                     "available Ports: "
@@ -149,7 +177,7 @@ class SerialReader:
                     + "; ignored Ports: "
                     + str([sp.port for sp in self.connected_ports])
                     + "; ignored Ports: "
-                    + str([sp.port for sp in self.identified_ports]),
+                    + str([sp.port for sp in self.identified_ports])
                 )
 
                 self.send_ports()
@@ -164,8 +192,8 @@ class SerialReader:
     def open_port(self, port):
         self.reactivate_port(port)
 
-
         from ..serialport import open_serial_port
+
         t = threading.Thread(
             target=open_serial_port,
             kwargs={
@@ -174,7 +202,7 @@ class SerialReader:
                     "config": self.config,
                     "port": port,
                     "baudrate": self.config.get("portdata", port, "baud", default=9600),
-                },
+                }
             },
         )
         t.start()

@@ -15,7 +15,7 @@ def board_by_firmware(firmware):
     return BOARDS.get(firmware, None)
 
 
-def parse_path_for_boards(path,prefix=""):
+def parse_path_for_boards(path, prefix=""):
     global BOARDS
     dir_path = path
 
@@ -25,12 +25,13 @@ def parse_path_for_boards(path,prefix=""):
         if os.path.isdir(p) and not p.endswith("__")
     ]
     loaded_firmwares = set()
-    prefix = prefix+os.path.basename(path)+"."
+    prefix = prefix + os.path.basename(path) + "."
     for boardfolder in boardsfolders:
         boardpy = os.path.join(boardfolder, "board.py")
         if os.path.exists(boardpy):
             spec = importlib.util.spec_from_file_location(
-                "board." + prefix + basename(boardfolder), os.path.join(boardfolder, "board.py")
+                "board." + prefix + basename(boardfolder),
+                os.path.join(boardfolder, "board.py"),
             )
             foo = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(foo)
@@ -48,9 +49,9 @@ def parse_path_for_boards(path,prefix=""):
                     except:
                         pass
         else:
-            parse_path_for_boards(boardfolder,prefix=prefix)
-    #print(path)
-    #print(BOARDS)
+            parse_path_for_boards(boardfolder, prefix=prefix)
+    # print(path)
+    # print(BOARDS)
 
 
 parse_path_for_boards(

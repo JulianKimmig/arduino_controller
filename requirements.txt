@@ -1,5 +1,6 @@
 Json-Dict
 FilterDict
-pyseria
+pyserial
+ArduinoCodeCreator
 numpy
 pandas
