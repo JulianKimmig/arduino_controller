@@ -7,7 +7,7 @@ import serial
 import filter_dict
 from arduino_controller.serialreader.serialreader import DATAPOINT_RESOLUTION
 from .parseboards import board_by_firmware
-from .basicboard.board import  BasicBoard
+from .basicboard.board import ArduinoBasicBoard
 from .portrequest import validate_buffer
 
 PORT_READ_TIME = 0.01
@@ -105,7 +105,7 @@ class SerialPort(serial.Serial):
         if newb is not None:
             self.set_board(newb["classcaller"])
         else:
-            self.set_board(BasicBoard)
+            self.set_board(ArduinoBasicBoard)
 
     def add_data_target(self, data_target=None):
         if data_target is not None:

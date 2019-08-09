@@ -3,7 +3,7 @@ from ArduinoCodeCreator import arduino_data_types
 from ArduinoCodeCreator.arduino import Arduino, Eeprom
 from ArduinoCodeCreator.basic_types import Variable as ACCArdVar, Function, ArduinoEnum
 
-from arduino_controller.modul_variable import ModuleVariable, ModuleVariableTemplate
+from arduino_controller.modul_variable import ModuleVariable
 
 
 class ArduinoVariable(ACCArdVar, ModuleVariable):
@@ -36,6 +36,7 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
         if eeprom:
             save = False
 
+        self.board = board
         self.add_to_code = add_to_code
         if isinstance(allowed_values, ArduinoEnum):
             allowed_values = {
@@ -45,7 +46,6 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
             self,
             name=self.name,
             python_type=self.type.python_type,
-            board=board,
             html_input=html_input,
             save=save,
             getter=getter,
@@ -55,6 +55,7 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
             maximum=maximum,
             is_data_point=is_data_point,
             allowed_values=allowed_values,
+            is_global_var=is_global_var,
             nullable=False,
             changeable=changeable
             if changeable is not None
@@ -81,7 +82,13 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
         self.arduino_getter = (
             None
             if arduino_getter is False
-            else self.generate_arduino_getter(arduino_getter)
+            else Function(
+                arguments=COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS,
+                name="get_{}".format(self),
+                code=self.generate_arduino_getter()
+                if arduino_getter is None
+                else arduino_getter,
+            )
         )
 
     @staticmethod
@@ -90,7 +97,7 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
 
         if var.arduino_setter is not None:
             if send_to_board:
-                var.board.get_portcommand_by_name("set_" + var.name).sendfunction(data)
+                instance.get_portcommand_by_name("set_" + var.name).sendfunction(data)
 
     def set_without_sending_to_board(self, instance, data):
         self.setter(var=self, instance=instance, data=data, send_to_board=False)
@@ -111,34 +118,54 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
             functions.append(Eeprom.put(self.board.eeprom_position.get(self), self))
         return functions
 
-    def generate_arduino_getter(self,arduino_getter):
-        from arduino_controller.basicboard.board import WRITE_DATA_FUNCTION, COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS
-        f = Function(
-            arguments=COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS,
-            name="get_{}".format(self),
-            code=()
-            if arduino_getter is None
-            else arduino_getter,
-        )
-        if arduino_getter is None:
-            f.add_call(WRITE_DATA_FUNCTION(self, self.board.byte_ids.get(f)))
-        return f
+    def generate_arduino_getter(self):
+        from arduino_controller.basicboard.board import WRITE_DATA_FUNCTION
+
+        return WRITE_DATA_FUNCTION(self, "BYTEID")
 
 
-class ArduinoVariableTemplate(ModuleVariableTemplate):
-    targetclass = ArduinoVariable
-    def __init__(self, name,arduino_data_type=arduino_data_types.uint8_t, default=None, html_input=None,
-                 save=True, getter=None, setter=None, minimum=None, maximum=None, is_data_point=False,
-                 allowed_values=None, arduino_getter=None, arduino_setter=None, eeprom=False,
-                 changeable=None, add_to_code=True,unique=False):
-        super().__init__(name = name, python_type=arduino_data_type.python_type, html_input = html_input, save = save, getter = getter,
-                         setter = setter, default = default, minimum = minimum, maximum = maximum, is_data_point = is_data_point,
-                         allowed_values = allowed_values, changeable = changeable,unique = unique)
+class ArduinoVariableTemplate:
+    def __init__(self,
+                 name,
+                 arduino_data_type=arduino_data_types.uint8_t,
+                 default=None,
+                 html_input=None,
+                 save=True,
+                 getter=None,
+                 setter=None,
+                 minimum=None,
+                 maximum=None,
+                 is_data_point=False,
+                 allowed_values=None,
+                 is_global_var=True,
+                 arduino_getter=None,
+                 arduino_setter=None,
+                 eeprom=False,
+                 changeable=None,
+                 add_to_code=True,):
+        self.html_input = html_input
+        self.save = save
+        self.getter = getter
+        self.setter = setter
+        self.minimum = minimum
+        self.maximum = maximum
+        self.is_data_point = is_data_point
+        self.is_global_var = is_global_var
+        self.allowed_values = allowed_values
+        self.default = default
         self.arduino_getter = arduino_getter
         self.eeprom = eeprom
         self.arduino_setter = arduino_setter
-        self.add_to_code = add_to_code
         self.arduino_data_type = arduino_data_type
+        self.changeable = changeable
+        self.add_to_code = add_to_code
+        self.name = name
+        self.board=None
+
+    def initialize(self, instance, name):
+        self.board=instance
+        new_var = filter_dict.call_method(ArduinoVariable, kwargs=self.__dict__)
+        setattr(instance, name,new_var)
 
 
 arduio_variable = ArduinoVariableTemplate

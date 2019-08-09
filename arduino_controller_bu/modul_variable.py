@@ -1,7 +1,5 @@
 import numpy as np
 
-import filter_dict
-
 
 class StrucTypeNotFoundException(Exception):
     pass
@@ -66,7 +64,6 @@ class ModuleVariable:
         self,
         name,
         python_type,
-        board,
         html_input=None,
         var_structure=None,
         save=True,
@@ -77,20 +74,21 @@ class ModuleVariable:
         maximum=None,
         is_data_point=False,
         allowed_values=None,
+        is_global_var=True,
         nullable=False,
         changeable=None,
     ):
 
-        self.board = board
         self.name = str(name)
         self.python_type = python_type
         self.save = save
         self.is_data_point = is_data_point
         self.html_input = html_input
         self.allowed_values = allowed_values
+        self.is_global_var = is_global_var
         self.nullable = nullable
         self.attributes = {}
-        self.return_self = True
+        self.return_self = False
 
         if not hasattr(self, "structure_list"):
             self.structure_list = DEFAULT_STRUCTURES
@@ -135,13 +133,13 @@ class ModuleVariable:
     def default_getter(self, instance):
         return self.value
 
-    def default_setter(self,var, instance, data):
+    @staticmethod
+    def default_setter(var, instance, data):
         if data is None and not var.nullable:
             return
         if data is not None:
             data = var.python_type(data)
 
-        #print(self.name,instance,getattr(instance,self.name))
         if var.allowed_values is not None:
             # if value is not allowed by allowed_values
             if data not in var.allowed_values:
@@ -158,7 +156,7 @@ class ModuleVariable:
 
         var.value = data
         if var.is_data_point:
-            self.board.data_point(var.name, data)
+            instance.data_point(var.name, data)
         return data
 
     def set_value(self, instance, value):
@@ -243,48 +241,3 @@ class ModuleVariable:
             self.attributes["html_input"] = html_input
 
     html_input = property(get_html_input, set_html_input)
-
-
-class ModuleVariableTemplate():
-    targetclass = ModuleVariable
-    def __init__(
-            self,
-            name,
-            python_type,
-            html_input=None,
-            var_structure=None,
-            save=True,
-            getter=None,
-            setter=None,
-            default=None,
-            minimum=None,
-            maximum=None,
-            is_data_point=False,
-            allowed_values=None,
-            nullable=False,
-            changeable=None,
-            unique=False
-    ):
-        self.unique = unique
-        self.name = name
-        self.python_type = python_type
-        self.html_input = html_input
-        self.var_structure = var_structure
-        self.getter = getter
-        self.save = save
-        self.setter = setter
-        self.default = default
-        self.minimum = minimum
-        self.is_data_point = is_data_point
-        self.maximum = maximum
-        self.allowed_values = allowed_values
-        self.nullable = nullable
-        self.changeable = changeable
-        self.board=None
-
-    def initialize(self, instance, name):
-        self.board=instance
-        new_var = filter_dict.call_method(self.targetclass, kwargs=self.__dict__)
-        new_var.name = name
-        setattr(instance, name,new_var)
-        return new_var

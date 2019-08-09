@@ -6,7 +6,7 @@ import inspect
 import os
 from os.path import basename
 
-
+from .basicboard.board import ArduinoBasicBoard
 
 BOARDS = {}
 
@@ -53,3 +53,11 @@ def parse_path_for_boards(path, prefix=""):
     # print(path)
     # print(BOARDS)
 
+
+parse_path_for_boards(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(sys.modules[ArduinoBasicBoard.__module__].__file__)
+        )
+    )
+)

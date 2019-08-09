@@ -41,7 +41,6 @@ class PortCommand:
         self.receivefunction = receivefunction
         self.name = re.sub(r"\s+", "", name, flags=re.UNICODE)
         self.byteid = module.first_free_byte_id
-
         # print(arduino_function)
         # print(self.byteid, self.name)
         # arduino_function.byte_id=self.byteid
@@ -54,7 +53,6 @@ class PortCommand:
             self.arduino_function.name = "{}_{}".format(
                 self.arduino_function.name, self.byteid
             )
-            self.module.byte_ids.add_possibility(self.arduino_function,self.byteid)
         else:
             self.arduino_function = None
 
