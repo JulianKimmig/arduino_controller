@@ -162,7 +162,6 @@ class ArduinoAPIWebsocketConsumer():
             cls.apis.append(api)
             for instance in cls.instances:
                 api.add_ws_target(instance)
-        print("aad",cls.apis)
 
     @classmethod
     def register_at_apis(cls,receiver):
@@ -198,8 +197,6 @@ class ArduinoAPIWebsocketConsumer():
             answer = filter_dict.call_method(getattr(self.apis[data["data"]["api"]],data['cmd']),kwargs=data["data"])
         if answer is not None:
             self.to_client(dict(cmd=data['cmd'].replace("get_","set_"),data=answer),type="cmd")
-
-        print(answer)
 
     def get_apis(self):
         return self.apis

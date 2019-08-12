@@ -153,7 +153,7 @@ class ArduinoBoard():
                 self._module_variables[tempplate.name] = tempplate.initialize(self,tempplate.name)
                 setattr(module,attribute,self._module_variables[tempplate.name])
 
-        print(self._module_variables)
+        #print(self._module_variables)
 
 
 
