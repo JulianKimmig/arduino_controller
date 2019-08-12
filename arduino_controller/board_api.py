@@ -148,6 +148,9 @@ class BoardApi(SerialReaderDataTarget,SerialPortDataTarget):
         if receiver in self._ws_targets:
             self._ws_targets.remove(receiver)
 
+    def get_boards(self):
+        return dict(required_boards=self.required_boards,possible_boards=self.possible_boards,linked_boards = self.linked_boards)
+
 
 class ArduinoAPIWebsocketConsumer():
     apis = list()
