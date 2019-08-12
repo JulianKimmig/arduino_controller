@@ -53,3 +53,12 @@ def parse_path_for_boards(path, prefix=""):
     # print(path)
     # print(BOARDS)
 
+
+def add_board(board_class):
+    global BOARDS
+    if board_class.FIRMWARE not in BOARDS:
+        BOARDS[board_class.FIRMWARE] = {
+            "firmware": board_class.FIRMWARE,
+            "classcaller": board_class,
+            "name": board_class.CLASSNAME,
+        }
