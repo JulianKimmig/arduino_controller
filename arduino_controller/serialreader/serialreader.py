@@ -42,7 +42,6 @@ class SerialReader:
         permanently_ignored_ports=None,
         # datalogger: DataLogger = None,
     ):
-
         self.data_targets = set()
 
         self.ignored_ports = set()
@@ -174,9 +173,9 @@ class SerialReader:
                     + str(newports)
                     + "; ignored Ports: "
                     + str(self.ignored_ports | self.permanently_ignored_ports)
-                    + "; ignored Ports: "
+                    + "; connected Ports: "
                     + str([sp.port for sp in self.connected_ports])
-                    + "; ignored Ports: "
+                    + "; identified Ports: "
                     + str([sp.port for sp in self.identified_ports])
                 )
 
@@ -188,6 +187,15 @@ class SerialReader:
                         self.logger.exception(e)
                         pass
             time.sleep(self.port_check_time)
+
+    def get_port(self,port):
+        for sp in self.identified_ports:
+            if sp.port == port:
+                return sp
+        for sp in self.connected_ports:
+            if sp.port == port:
+                return sp
+        return None
 
     def open_port(self, port):
         self.reactivate_port(port)

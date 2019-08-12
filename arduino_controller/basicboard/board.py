@@ -16,7 +16,9 @@ from ArduinoCodeCreator.statements import (
     else_,
     elseif_,
 )
+from arduino_controller import parseboards
 from arduino_controller.modul_variable import ModuleVariableTemplate, ModuleVariable
+from arduino_controller.parseboards import BOARDS
 from arduino_controller.portcommand import PortCommand
 from arduino_controller.python_variable import python_variable, PythonVariable
 
@@ -43,6 +45,7 @@ class ArduinoBoard():
     def __init__(self):
         if self.CLASSNAME is None:
             self.CLASSNAME = self.__class__.__name__
+
         self._first_free_byte_id = 0
         self._serial_port = None
         self._port = None
