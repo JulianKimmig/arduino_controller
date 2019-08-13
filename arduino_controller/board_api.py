@@ -16,6 +16,16 @@ from arduino_controller.serialreader.serialreader import SerialReaderDataTarget
 from arduino_controller import parseboards
 from json_dict import JsonDict
 
+def api_function(visible=True,**kwargs):
+    def func_wrap(func):
+        def api_func_warper(*args,**kwargs):
+            threading.Thread(target=func,args=args,kwargs=kwargs).start()
+        api_func_warper.api_function=True
+        api_func_warper.visible=visible
+        for n,t in kwargs.items():
+            setattr(api_func_warper,n,t)
+        return api_func_warper
+    return func_wrap
 
 class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     required_boards = []
@@ -166,8 +176,19 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     def get_status(self):
         status = True
         if None in self.linked_boards:
-            dict(status=False,reason="not all boards linked")
+            return dict(status=False,reason="not all boards linked")
         return dict(status=True)
+
+    def get_functions(self):
+        functions = {}
+        for method in dir(self):
+            try:
+                m = getattr(self,method)
+                if m.api_function:
+                    functions[method]=m.__dict__
+            except AttributeError:
+                pass
+        return functions
 
 class ArduinoAPIWebsocketConsumer():
     apis = list()
@@ -217,11 +238,13 @@ class ArduinoAPIWebsocketConsumer():
         if hasattr(self, data['cmd']) and not 'api' in data["data"]:
             answer = filter_dict.call_method(getattr(self, data['cmd']), kwargs=data["data"])
         else:
-            answer = filter_dict.call_method(getattr(self.apis[data["data"]["api"]], data['cmd']), kwargs=data["data"])
+            api = data["data"]["api"]
+            del data["data"]["api"]
+            answer = filter_dict.call_method(getattr(self.apis[api], data['cmd']), kwargs=data["data"])
             if answer is not None:
                 if not isinstance(answer, dict):
                     answer = {'data': answer}
-                answer['api_position'] = data["data"]["api"]
+                answer['api_position'] = api
         if answer is not None:
             self.to_client(dict(cmd=data['cmd'].replace("get_", "set_"), data=answer), type="cmd")
 

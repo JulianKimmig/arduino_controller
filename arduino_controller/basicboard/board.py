@@ -59,10 +59,6 @@ class ArduinoBoard():
         self.port_commands = []
         self.id = None
 
-
-
-
-
         self._loaded_module_instances = []
         self._module_variables = {}
         self.eeprom_position = at.ArduinoEnum("eeprom_position", {})
