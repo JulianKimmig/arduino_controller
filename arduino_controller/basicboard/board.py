@@ -332,6 +332,9 @@ class ArduinoBoard():
         else:
             object.__setattr__(self, attr, value)
 
+    def __repr__(self):
+        return "{}({})".format(self.CLASSNAME,self.id)
+
 class ArduinoBoardModule():
     unique = False
     _instances = []
