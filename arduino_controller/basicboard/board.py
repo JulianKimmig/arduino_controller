@@ -676,7 +676,7 @@ class BasicBoardModule(ArduinoBoardModule):
 
     dataloop = at.Function("dataloop")
     arduino_identified = at.Variable(type=bool_, value=0, name="arduino_identified")
-
+    current_time = at.Variable(type=uint32_t, name="current_time")
     def post_initalization(self):
         def _receive_id(board,data):
             board.id = int(np.uint64(data))
@@ -714,7 +714,6 @@ class BasicBoardModule(ArduinoBoardModule):
         ad.add(self.board.byte_ids)
 
         last_data = ad.add(at.Variable("lastdata", uint32_t, 0))
-        current_time = ad.add(at.Variable(type=uint32_t, name="current_time"))
         current_character = ad.add(at.Variable(type=uint8_t, name="current_character"))
         checksum = ad.add(at.Variable(type=uint16_t, name="checksum"))
 
@@ -977,12 +976,12 @@ class BasicBoardModule(ArduinoBoardModule):
 
         ad.loop.add_call(
             readloop(),
-            current_time.set(Arduino.millis()),
+            self.current_time.set(Arduino.millis()),
             if_(
-                (current_time - last_data > self.board.data_rate).and_(
+                (self.current_time - last_data > self.board.data_rate).and_(
                     self.arduino_identified
                 ),
-                code=(self.dataloop(), last_data.set(current_time)),
+                code=(self.dataloop(), last_data.set(self.current_time)),
             ),
         )
 
@@ -1000,7 +999,7 @@ class BasicBoardModule(ArduinoBoardModule):
             ),
             check_uuid(),
             for_(i, i < self.MAXFUNCTIONS, 1, cmds[i].set(255)),
-            current_time.set(Arduino.millis()),
+            self.current_time.set(Arduino.millis()),
             *[
                 add_command(
                     self.board.byte_ids.get(portcommand.arduino_function),
