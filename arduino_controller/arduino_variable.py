@@ -23,7 +23,6 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
         maximum=None,
         is_data_point=False,
         allowed_values=None,
-        is_global_var=True,
         arduino_getter=None,
         arduino_setter=None,
         eeprom=False,
@@ -32,6 +31,8 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
     ):
 
         ACCArdVar.__init__(self, type=arduino_data_type, value=default, name=name)
+
+        #self.add_to_code = add_to_code
 
         if eeprom:
             save = False
@@ -100,13 +101,15 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
             COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS,
         )
 
-        functions = [
-            Arduino.memcpy(
-                self.to_pointer(),
-                COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS[0],
-                self.type.byte_size,
+        functions = []
+        if self.add_to_code:
+            functions.append(
+                Arduino.memcpy(
+                    self.to_pointer(),
+                    COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS[0],
+                    self.type.byte_size,
+                )
             )
-        ]
         if self.eeprom:
             functions.append(Eeprom.put(self.board.eeprom_position.get(self), self))
         return functions
@@ -121,7 +124,8 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
             else arduino_getter,
         )
         if arduino_getter is None:
-            f.add_call(WRITE_DATA_FUNCTION(self, self.board.byte_ids.get(f)))
+            if self.add_to_code:
+                f.add_call(WRITE_DATA_FUNCTION(self, self.board.byte_ids.get(f)))
         return f
 
 

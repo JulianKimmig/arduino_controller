@@ -287,6 +287,8 @@ class ArduinoBoard():
             self._serial_port.add_data_point(self, str(name), y=data, x=None)
 
     def restore(self, data):
+        print("RESTORE")
+        print(data)
         for attr, ard_var in self.get_module_vars().items():
             if ard_var.save and attr in data:
                 setattr(self, attr, data[attr])
@@ -300,8 +302,10 @@ class ArduinoBoard():
 
     def save(self):
         data = {}
+        print("SAVE")
         for attr, py_var in self.get_module_vars().items():
             if py_var.save:
+                print(attr)
                 data[attr] = py_var.value
         return data
 
@@ -363,7 +367,7 @@ class ArduinoBoardModule():
             )
         if variable.eeprom:
             board.eeprom_position.add_possibility(variable, size=variable.type.byte_size)
-            arduino_code_creator.setup.prepent_call(Eeprom.get(board.eeprom_position.get(variable), variable))
+            arduino_code_creator.setup.prepend_call(Eeprom.get(board.eeprom_position.get(variable), variable))
 
     @classmethod
     def _arduino_code_try_to_add_var(cls,variable, board,arduino_code_creator):
@@ -623,7 +627,7 @@ class ArduinoBoardModule2():
     #         )
     #     if variable.eeprom:
     #         board.eeprom_position.add_possibility(variable, size=variable.type.byte_size)
-    #         arduino_code_creator.setup.prepent_call(Eeprom.get(board.eeprom_position.get(variable), variable))
+    #         arduino_code_creator.setup.prepend_call(Eeprom.get(board.eeprom_position.get(variable), variable))
 
 
 from arduino_controller.portrequest import (
@@ -679,7 +683,7 @@ class BasicBoardModule(ArduinoBoardModule):
     current_time = at.Variable(type=uint32_t, name="current_time")
     def post_initalization(self):
         def _receive_id(board,data):
-            board.id = int(np.uint64(data))
+            board.id = np.uint64(data)
         identify_portcommand = PortCommand(
             module=self.board,
             name="identify",

@@ -777,7 +777,7 @@ class ArduinoBasicBoard:
             )
         if attr.eeprom:
             self.eeprom_position.add_possibility(attr, size=attr.type.byte_size)
-            ad.setup.prepent_call(Eeprom.get(self.eeprom_position.get(attr), attr))
+            ad.setup.prepend_call(Eeprom.get(self.eeprom_position.get(attr), attr))
 
     def __getattribute__(self, attr):
         obj = object.__getattribute__(self, attr)
