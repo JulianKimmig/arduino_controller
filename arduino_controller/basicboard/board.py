@@ -287,8 +287,6 @@ class ArduinoBoard():
             self._serial_port.add_data_point(self, str(name), y=data, x=None)
 
     def restore(self, data):
-        print("RESTORE")
-        print(data)
         for attr, ard_var in self.get_module_vars().items():
             if ard_var.save and attr in data:
                 setattr(self, attr, data[attr])
@@ -302,10 +300,8 @@ class ArduinoBoard():
 
     def save(self):
         data = {}
-        print("SAVE")
         for attr, py_var in self.get_module_vars().items():
             if py_var.save:
-                print(attr)
                 data[attr] = py_var.value
         return data
 
@@ -798,17 +794,17 @@ class BasicBoardModule(ArduinoBoardModule):
         )
 
         write_data_function = ad.add(WRITE_DATA_FUNCTION)
-        d = write_data_function.add_variable(
-            at.Array(size=Arduino.sizeof(T), type=uint8_t, name="d")
-        )
+        #d = write_data_function.add_variable(
+        #    at.Array(size=Arduino.sizeof(T), type=uint8_t, name="d")
+        #)
         write_data_function.add_call(
-            for_(
-                i,
-                i < Arduino.sizeof(T),
-                1,
-                d[i].set((write_data_function.arg1 >> i * 8 & 0xFF).cast(uint8_t)),
-            ),
-            write_data_array(d, write_data_function.arg2, Arduino.sizeof(T)),
+            #for_(
+            #    i,
+            #    i < Arduino.sizeof(T),
+            #    1,
+            #    d[i].set((write_data_function.arg1 >> i * 8 & 0xFF).cast(uint8_t)),
+            #),
+            write_data_array(write_data_function.arg1.to_pointer(), write_data_function.arg2, Arduino.sizeof(T)),
         )
 
         check_uuid = ad.add(

@@ -59,17 +59,19 @@ class PortCommand:
             self.arduino_function = None
 
     def defaultsendfunction(self, numericaldata=None):
+        print(numericaldata)
         if numericaldata is None:
             data = bytearray()
         else:
             data = np.array([numericaldata], dtype=self.python_sendtype).tobytes()
-        print(self.name)
+        print(data)
         self.module.serial_port.write(
             bytearray(generate_port_message(self.byteid, self.sendlength, *data))
         )
 
     def receive(self, nparray):
         # print(self.python_receivetype,nparray)
+        #print(nparray,self.python_receivetype)
         self.receivefunction(
             self.module,
             np.frombuffer(nparray, dtype=self.python_receivetype)[0]

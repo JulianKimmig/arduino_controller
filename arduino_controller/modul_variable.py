@@ -54,12 +54,14 @@ DEFAULT_STRUCTURES = {
         )
         for nptype in [
             np.double,
-            np.float
+            np.float,
+            np.float32,
+            np.float16,
+            np.float64,
         ]
     },
     bool: ModuleVarianbleStruct(python_type=bool, html_input="checkbox"),
 }
-
 
 class ModuleVariable:
     def __init__(
@@ -69,18 +71,27 @@ class ModuleVariable:
         board,
         html_input=None,
         var_structure=None,
-        save=True,
+        save=None,
         getter=None,
         setter=None,
         default=None,
         minimum=None,
         maximum=None,
-        is_data_point=False,
+        is_data_point=None,
         allowed_values=None,
-        nullable=False,
+        nullable=None,
         changeable=None,
+            html_attributes = None
     ):
 
+        if save is None: save=True
+        if is_data_point is None: is_data_point=False
+        if nullable is None: nullable=False
+
+        if html_attributes is None:
+            html_attributes = {}
+        self.html_attributes = html_attributes
+        print(html_attributes)
         self.board = board
         self.name = str(name)
         self.python_type = python_type
@@ -158,8 +169,12 @@ class ModuleVariable:
 
         var.value = data
         if var.is_data_point:
-            self.board.data_point(var.name, data)
+            var.send_data_point(data)
         return data
+
+
+    def send_data_point(self,data):
+        self.board.data_point(self.name, data)
 
     def set_value(self, instance, value):
         self.setter(var=self, instance=instance, data=value)
@@ -169,6 +184,26 @@ class ModuleVariable:
             return self
         return self.getter(instance)
 
+    def modulvar_getter_modification(self, newfunc):
+        pregetter = self.getter
+        def newgetter(*args,**kwargs):
+            return newfunc(pregetter(*args,**kwargs))
+        self.getter = newgetter
+
+    def modulvar_setter_modification(self, newfunc):
+        presetter = self.setter
+        def newsetter(data=0,*args,**kwargs):
+            data = newfunc(self.python_type(data))
+            return presetter(data=data,*args,**kwargs)
+        self.setter = newsetter
+
+    def data_point_modification(self, newfunc):
+        presetter = self.send_data_point
+        def newsetter(data):
+            data = newfunc(self.python_type(data))
+            return presetter(data=data)
+        self.send_data_point = newsetter
+
     def _generate_html_input(self):
         if self.changeable:
             if self.allowed_values is not None:
@@ -177,7 +212,7 @@ class ModuleVariable:
                     " ".join(
                         [
                             str(key) + '="' + str(val) + '"'
-                            for key, val in self.var_structure.html_attributes.items()
+                            for key, val in {**self.var_structure.html_attributes,**self.html_attributes}.items()
                         ]
                     ),
                     "".join(
@@ -218,7 +253,7 @@ class ModuleVariable:
                     + " ".join(
                         [
                             str(key) + '="' + str(val) + '"'
-                            for key, val in self.var_structure.html_attributes.items()
+                            for key, val in {**self.var_structure.html_attributes,**self.html_attributes}.items()
                         ]
                     )
                     + (" readonly" if self.setter is None else "")
@@ -251,35 +286,12 @@ class ModuleVariableTemplate():
             self,
             name,
             python_type,
-            html_input=None,
-            var_structure=None,
-            save=True,
-            getter=None,
-            setter=None,
-            default=None,
-            minimum=None,
-            maximum=None,
-            is_data_point=False,
-            allowed_values=None,
-            nullable=False,
-            changeable=None,
-            unique=False
+            **kwargs
     ):
-        self.unique = unique
+        for key,val in kwargs.items():
+            setattr(self, key,val)
         self.name = name
         self.python_type = python_type
-        self.html_input = html_input
-        self.var_structure = var_structure
-        self.getter = getter
-        self.save = save
-        self.setter = setter
-        self.default = default
-        self.minimum = minimum
-        self.is_data_point = is_data_point
-        self.maximum = maximum
-        self.allowed_values = allowed_values
-        self.nullable = nullable
-        self.changeable = changeable
         self.board=None
 
     def initialize(self, instance, name):
