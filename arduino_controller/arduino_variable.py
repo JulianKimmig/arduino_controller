@@ -41,7 +41,9 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
         ACCArdVar.__init__(self, type=arduino_data_type, value=default, name=name)
 
         # self.add_to_code = add_to_code
-
+        if is_data_point and setter is False:
+            setter=None
+            changeable = False
         if eeprom:
             save = False
 

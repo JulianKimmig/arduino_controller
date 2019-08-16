@@ -1,11 +1,10 @@
-import inspect
+import logging
 import logging
 import time
 
 from ArduinoCodeCreator import basic_types as at
 from ArduinoCodeCreator.arduino import Eeprom, Serial, Arduino
 from ArduinoCodeCreator.arduino_data_types import *
-from ArduinoCodeCreator.basic_types import ArduinoClass
 from ArduinoCodeCreator.code_creator import ArduinoCodeCreator
 from ArduinoCodeCreator.statements import (
     for_,
@@ -16,11 +15,9 @@ from ArduinoCodeCreator.statements import (
     else_,
     elseif_,
 )
-from arduino_controller import parseboards
 from arduino_controller.modul_variable import ModuleVariableTemplate, ModuleVariable
-from arduino_controller.parseboards import BOARDS
 from arduino_controller.portcommand import PortCommand
-from arduino_controller.python_variable import python_variable, PythonVariable
+from arduino_controller.python_variable import PythonVariable
 
 MAXATTEMPTS = 3
 IDENTIFYTIME = 2
@@ -126,9 +123,6 @@ class ArduinoBoard():
             module._instance_arduino_code(arduino_code_creator)
             module.instance_arduino_code(arduino_code_creator)
         ino = arduino_code_creator.create_code(obscure=obscure)
-
-        import inspect
-        import os
 
         if file is None:
             print(ino)
