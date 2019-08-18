@@ -81,7 +81,7 @@ class ModuleVariable:
         allowed_values=None,
         nullable=None,
         changeable=None,
-            html_attributes = None
+        html_attributes = None
     ):
 
         if save is None: save=True

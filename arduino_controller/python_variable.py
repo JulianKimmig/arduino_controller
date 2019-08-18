@@ -21,6 +21,7 @@ class PythonVariable(ModuleVariable):
         allowed_values=None,
         nullable=True,
         changeable=None,
+            html_attributes = None
     ):
 
         super().__init__(
@@ -39,6 +40,7 @@ class PythonVariable(ModuleVariable):
             allowed_values=allowed_values,
             nullable=nullable,
             changeable=changeable,
+            html_attributes=html_attributes
         )
 
 
