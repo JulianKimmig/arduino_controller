@@ -45,6 +45,6 @@ class PythonVariable(ModuleVariable):
 class PythonVariableTemplate(ModuleVariableTemplate):
     targetclass = PythonVariable
     def __init__(self, name, type=np.float,**kwargs):
-        super().__init__(name=name,python_type=type,type=type)
+        super().__init__(name=name,python_type=type,type=type,**kwargs)
 
 python_variable = PythonVariableTemplate

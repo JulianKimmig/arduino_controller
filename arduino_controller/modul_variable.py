@@ -91,7 +91,6 @@ class ModuleVariable:
         if html_attributes is None:
             html_attributes = {}
         self.html_attributes = html_attributes
-        print(html_attributes)
         self.board = board
         self.name = str(name)
         self.python_type = python_type

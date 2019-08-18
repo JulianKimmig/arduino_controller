@@ -380,6 +380,9 @@ class ArduinoBoardModule():
         if isinstance(variable, at.Definition):
             arduino_code_creator.add(variable)
 
+        if isinstance(variable, at.Include):
+            arduino_code_creator.add(variable)
+
     @classmethod
     def _module_arduino_code(cls, board, arduino_code_creator):
         for name, variable in cls.__dict__.items():
@@ -654,6 +657,11 @@ class BasicBoardModule(ArduinoBoardModule):
     data_rate = arduio_variable(
         name="data_rate", arduino_data_type=uint32_t, minimum=1, eeprom=True
     )
+
+    dummy8 = at.Variable("dummy8",type=uint8_t)
+    dummy16 = at.Variable("dummy16",type=uint16_t)
+    dummy32 = at.Variable("dummy32",type=uint32_t)
+    dummy64 = at.Variable("dummy64",type=uint64_t)
 
     STARTANALOG = at.Definition("STARTANALOG", 0)
     STARTBYTE = at.Definition("STARTBYTE", int.from_bytes(STARTBYTE, "big"))
