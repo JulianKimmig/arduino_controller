@@ -125,24 +125,26 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
 
 
 class ArduinoVariableTemplate:
-    def __init__(self,
-                 name,
-                 arduino_data_type=arduino_data_types.uint8_t,
-                 default=None,
-                 html_input=None,
-                 save=True,
-                 getter=None,
-                 setter=None,
-                 minimum=None,
-                 maximum=None,
-                 is_data_point=False,
-                 allowed_values=None,
-                 is_global_var=True,
-                 arduino_getter=None,
-                 arduino_setter=None,
-                 eeprom=False,
-                 changeable=None,
-                 add_to_code=True,):
+    def __init__(
+        self,
+        name,
+        arduino_data_type=arduino_data_types.uint8_t,
+        default=None,
+        html_input=None,
+        save=True,
+        getter=None,
+        setter=None,
+        minimum=None,
+        maximum=None,
+        is_data_point=False,
+        allowed_values=None,
+        is_global_var=True,
+        arduino_getter=None,
+        arduino_setter=None,
+        eeprom=False,
+        changeable=None,
+        add_to_code=True,
+    ):
         self.html_input = html_input
         self.save = save
         self.getter = getter
@@ -160,12 +162,12 @@ class ArduinoVariableTemplate:
         self.changeable = changeable
         self.add_to_code = add_to_code
         self.name = name
-        self.board=None
+        self.board = None
 
     def initialize(self, instance, name):
-        self.board=instance
+        self.board = instance
         new_var = filter_dict.call_method(ArduinoVariable, kwargs=self.__dict__)
-        setattr(instance, name,new_var)
+        setattr(instance, name, new_var)
 
 
 arduio_variable = ArduinoVariableTemplate

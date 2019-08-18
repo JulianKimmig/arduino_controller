@@ -8,41 +8,46 @@ from arduino_controller.modul_variable import ModuleVariable, ModuleVariableTemp
 
 class ArduinoVariable(ACCArdVar, ModuleVariable):
     def __init__(
-            self,
-            # for ArduinoVariable
-            board,
-            name,
-            arduino_data_type=None,
-            default=None,
-            # for module_variable
-            html_input=None,
-            save=None,
-            getter=None,
-            setter=None,
-            minimum=None,
-            maximum=None,
-            is_data_point=None,
-            allowed_values=None,
-            arduino_getter=None,
-            arduino_setter=None,
-            eeprom=None,
-            changeable=None,
-            add_to_code=None,
-            html_attributes=None,
+        self,
+        # for ArduinoVariable
+        board,
+        name,
+        arduino_data_type=None,
+        default=None,
+        # for module_variable
+        html_input=None,
+        save=None,
+        getter=None,
+        setter=None,
+        minimum=None,
+        maximum=None,
+        is_data_point=None,
+        allowed_values=None,
+        arduino_getter=None,
+        arduino_setter=None,
+        eeprom=None,
+        changeable=None,
+        add_to_code=None,
+        html_attributes=None,
     ):
 
-        #defaults
-        if arduino_data_type is None: arduino_data_type=arduino_data_types.uint8_t
-        if save is None: save=True
-        if is_data_point is None: is_data_point=False
-        if eeprom is None: eeprom=False
-        if add_to_code is None: add_to_code=True
+        # defaults
+        if arduino_data_type is None:
+            arduino_data_type = arduino_data_types.uint8_t
+        if save is None:
+            save = True
+        if is_data_point is None:
+            is_data_point = False
+        if eeprom is None:
+            eeprom = False
+        if add_to_code is None:
+            add_to_code = True
 
         ACCArdVar.__init__(self, type=arduino_data_type, value=default, name=name)
 
         # self.add_to_code = add_to_code
         if is_data_point and setter is False:
-            setter=None
+            setter = None
             changeable = False
         if eeprom:
             save = False
@@ -143,13 +148,15 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
         return functions
 
     def generate_arduino_getter(self, arduino_getter):
-        from arduino_controller.basicboard.board import WRITE_DATA_FUNCTION, COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS
+        from arduino_controller.basicboard.board import (
+            WRITE_DATA_FUNCTION,
+            COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS,
+        )
+
         f = Function(
             arguments=COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS,
             name="get_{}".format(self),
-            code=()
-            if arduino_getter is None
-            else arduino_getter,
+            code=() if arduino_getter is None else arduino_getter,
         )
         if arduino_getter is None:
             if self.add_to_code:
@@ -159,8 +166,14 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
 
 class ArduinoVariableTemplate(ModuleVariableTemplate):
     targetclass = ArduinoVariable
+
     def __init__(self, name, arduino_data_type=arduino_data_types.uint8_t, **kwargs):
-        super().__init__(name=name, python_type=arduino_data_type.python_type,arduino_data_type=arduino_data_type,**kwargs)
+        super().__init__(
+            name=name,
+            python_type=arduino_data_type.python_type,
+            arduino_data_type=arduino_data_type,
+            **kwargs
+        )
 
 
 arduio_variable = ArduinoVariableTemplate

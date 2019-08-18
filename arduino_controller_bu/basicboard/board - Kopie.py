@@ -82,7 +82,6 @@ class ArduinoBasicBoard:
     def post_ini_function(self):
         pass
 
-
     def __init__(self):
         self.module_vars = None
         self.pre_ini_function()
@@ -201,21 +200,21 @@ class ArduinoBasicBoard:
         with open(file, "w+") as f:
             f.write(ino)
 
-    def get_arduino_vars(self,reforce=False):
+    def get_arduino_vars(self, reforce=False):
         ardvars = {}
         for attr, ard_var in self.get_module_vars(reforce=reforce).items():
             if isinstance(ard_var, ArduinoVariable):
                 ardvars[attr] = ard_var
         return ardvars
 
-    def get_python_vars(self,reforce=False):
+    def get_python_vars(self, reforce=False):
         pyvars = {}
         for attr, pyvar in self.get_module_vars(reforce=reforce).items():
             if isinstance(pyvar, python_variable):
                 pyvars[attr] = pyvar
         return pyvars
 
-    def get_module_vars(self,reforce=False):
+    def get_module_vars(self, reforce=False):
         if self.module_vars is not None and not reforce:
             return self.module_vars
         mod_vars = {}
@@ -360,8 +359,10 @@ class ArduinoBasicBoard:
         board = {"module_variables": {}}
         print("AAAAAAAAAAAAAAAAAAAAAAAA")
         for attr, mod_var in self.get_module_vars().items():
-            if len(mod_var.html_input) > 0 :
-                form = mod_var.html_input.replace("{{value}}", str(getattr(self, attr, "")))
+            if len(mod_var.html_input) > 0:
+                form = mod_var.html_input.replace(
+                    "{{value}}", str(getattr(self, attr, ""))
+                )
                 board["module_variables"][attr] = {"form": form}
         return board
 

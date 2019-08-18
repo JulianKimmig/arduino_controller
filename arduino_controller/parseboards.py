@@ -7,7 +7,6 @@ import os
 from os.path import basename
 
 
-
 BOARDS = {}
 
 

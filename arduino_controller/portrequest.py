@@ -6,7 +6,9 @@ COMMANDBYTEPOSITION = 1
 LENBYTEPOSITION = 2
 DATABYTEPOSITION = 3
 
-np.seterr(over='ignore')
+np.seterr(over="ignore")
+
+
 def generate_checksum(array):
     sum1 = np.uint8(0)
     sum2 = np.uint8(0)

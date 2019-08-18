@@ -34,12 +34,12 @@ WRITE_DATA_FUNCTION = at.Function(
 from arduino_controller.arduino_variable import arduio_variable, ArduinoVariable
 
 
-class ArduinoBoard():
+class ArduinoBoard:
     FIRMWARE = -1
 
     def create_ino(self, file=None, obscure=False):
         arduino_code_creator = ArduinoCodeCreator()
-        assert self.FIRMWARE >-1, "No Firmware defined"
+        assert self.FIRMWARE > -1, "No Firmware defined"
 
         self.firmware = self.FIRMWARE
         for attr, modvar in self.get_module_vars().items():
@@ -67,30 +67,39 @@ class ArduinoBoard():
         for module in self.modules:
             self.load_module(module)
 
-    def load_module(self,module):
-        if module.unique and module in self.loaded_modules: return
-        #load depencies
+    def load_module(self, module):
+        if module.unique and module in self.loaded_modules:
+            return
+        # load depencies
         for depency in module.depencies:
             self.load_module(depency)
 
-        #load modul variables
-
+        # load modul variables
 
         self.loaded_modules.append(module)
 
 
-class ArduinoBoardModul():
+class ArduinoBoardModul:
     depencies = []
     unique = False
     pass
 
+
 class BasicBoardModul(ArduinoBoardModul):
     pass
+
 
 class BasicBoard(ArduinoBoard):
     FIRMWARE = 0
     unique = True
-    firmware = arduio_variable(name="firmware",arduino_data_type=uint64_t,arduino_setter=False,default=-1,save=False,)
+    firmware = arduio_variable(
+        name="firmware",
+        arduino_data_type=uint64_t,
+        arduino_setter=False,
+        default=-1,
+        save=False,
+    )
+
 
 # noinspection PyBroadException
 class ArduinoBasicBoard:
@@ -121,8 +130,6 @@ class ArduinoBasicBoard:
         arduino_getter=False,
     )
 
-
-
     data_rate = arduio_variable(
         name="data_rate", arduino_data_type=uint32_t, minimum=1, eeprom=True
     )
@@ -133,7 +140,6 @@ class ArduinoBasicBoard:
 
     def post_ini_function(self):
         pass
-
 
     def __init__(self):
         self.parse_base_boards(self.baseboards)
@@ -230,21 +236,21 @@ class ArduinoBasicBoard:
 
     first_free_byte_id = property(get_first_free_byte_id)
 
-    def get_arduino_vars(self,reforce=False):
+    def get_arduino_vars(self, reforce=False):
         ardvars = {}
         for attr, ard_var in self.get_module_vars(reforce=reforce).items():
             if isinstance(ard_var, ArduinoVariable):
                 ardvars[attr] = ard_var
         return ardvars
 
-    def get_python_vars(self,reforce=False):
+    def get_python_vars(self, reforce=False):
         pyvars = {}
         for attr, pyvar in self.get_module_vars(reforce=reforce).items():
             if isinstance(pyvar, python_variable):
                 pyvars[attr] = pyvar
         return pyvars
 
-    def get_module_vars(self,reforce=False):
+    def get_module_vars(self, reforce=False):
         if self.module_vars is not None and not reforce:
             return self.module_vars
         mod_vars = {}
@@ -389,8 +395,10 @@ class ArduinoBasicBoard:
         board = {"module_variables": {}}
         print("AAAAAAAAAAAAAAAAAAAAAAAA")
         for attr, mod_var in self.get_module_vars().items():
-            if len(mod_var.html_input) > 0 :
-                form = mod_var.html_input.replace("{{value}}", str(getattr(self, attr, "")))
+            if len(mod_var.html_input) > 0:
+                form = mod_var.html_input.replace(
+                    "{{value}}", str(getattr(self, attr, ""))
+                )
                 board["module_variables"][attr] = {"form": form}
         return board
 

@@ -23,8 +23,6 @@ class PythonVariable(ModuleVariable):
         changeable=None,
     ):
 
-
-
         super().__init__(
             name=name,
             html_input=html_input,

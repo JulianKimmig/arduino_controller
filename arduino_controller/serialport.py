@@ -7,7 +7,7 @@ import serial
 import filter_dict
 from arduino_controller.serialreader.serialreader import DATAPOINT_RESOLUTION
 from .parseboards import board_by_firmware
-from .basicboard.board import  BasicBoard
+from .basicboard.board import BasicBoard
 from .portrequest import validate_buffer
 
 PORT_READ_TIME = 0.01

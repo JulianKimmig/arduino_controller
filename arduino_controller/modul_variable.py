@@ -48,20 +48,12 @@ DEFAULT_STRUCTURES = {
         ]
     },
     **{
-        nptype: ModuleVarianbleStruct(
-            python_type=nptype,
-            html_input="number",
-        )
-        for nptype in [
-            np.double,
-            np.float,
-            np.float32,
-            np.float16,
-            np.float64,
-        ]
+        nptype: ModuleVarianbleStruct(python_type=nptype, html_input="number")
+        for nptype in [np.double, np.float, np.float32, np.float16, np.float64]
     },
     bool: ModuleVarianbleStruct(python_type=bool, html_input="checkbox"),
 }
+
 
 class ModuleVariable:
     def __init__(
@@ -81,12 +73,15 @@ class ModuleVariable:
         allowed_values=None,
         nullable=None,
         changeable=None,
-        html_attributes = None
+        html_attributes=None,
     ):
 
-        if save is None: save=True
-        if is_data_point is None: is_data_point=False
-        if nullable is None: nullable=False
+        if save is None:
+            save = True
+        if is_data_point is None:
+            is_data_point = False
+        if nullable is None:
+            nullable = False
 
         if html_attributes is None:
             html_attributes = {}
@@ -145,13 +140,13 @@ class ModuleVariable:
     def default_getter(self, instance):
         return self.value
 
-    def default_setter(self,var, instance, data):
+    def default_setter(self, var, instance, data):
         if data is None and not var.nullable:
             return
         if data is not None:
             data = var.python_type(data)
 
-        #print(self.name,instance,getattr(instance,self.name))
+        # print(self.name,instance,getattr(instance,self.name))
         if var.allowed_values is not None:
             # if value is not allowed by allowed_values
             if data not in var.allowed_values:
@@ -171,8 +166,7 @@ class ModuleVariable:
             var.send_data_point(data)
         return data
 
-
-    def send_data_point(self,data):
+    def send_data_point(self, data):
         self.board.data_point(self.name, data)
 
     def set_value(self, instance, value):
@@ -185,22 +179,28 @@ class ModuleVariable:
 
     def modulvar_getter_modification(self, newfunc):
         pregetter = self.getter
-        def newgetter(*args,**kwargs):
-            return newfunc(pregetter(*args,**kwargs))
+
+        def newgetter(*args, **kwargs):
+            return newfunc(pregetter(*args, **kwargs))
+
         self.getter = newgetter
 
     def modulvar_setter_modification(self, newfunc):
         presetter = self.setter
-        def newsetter(data=0,*args,**kwargs):
+
+        def newsetter(data=0, *args, **kwargs):
             data = newfunc(self.python_type(data))
-            return presetter(data=data,*args,**kwargs)
+            return presetter(data=data, *args, **kwargs)
+
         self.setter = newsetter
 
     def data_point_modification(self, newfunc):
         presetter = self.send_data_point
+
         def newsetter(data):
             data = newfunc(self.python_type(data))
             return presetter(data=data)
+
         self.send_data_point = newsetter
 
     def _generate_html_input(self):
@@ -211,7 +211,10 @@ class ModuleVariable:
                     " ".join(
                         [
                             str(key) + '="' + str(val) + '"'
-                            for key, val in {**self.var_structure.html_attributes,**self.html_attributes}.items()
+                            for key, val in {
+                                **self.var_structure.html_attributes,
+                                **self.html_attributes,
+                            }.items()
                         ]
                     ),
                     "".join(
@@ -252,7 +255,10 @@ class ModuleVariable:
                     + " ".join(
                         [
                             str(key) + '="' + str(val) + '"'
-                            for key, val in {**self.var_structure.html_attributes,**self.html_attributes}.items()
+                            for key, val in {
+                                **self.var_structure.html_attributes,
+                                **self.html_attributes,
+                            }.items()
                         ]
                     )
                     + (" readonly" if self.setter is None else "")
@@ -262,7 +268,9 @@ class ModuleVariable:
             html_input = ""
 
         if self.is_data_point:
-            html_input += '<input type={} name="data_point_{}" value="{{value}}" readonly disabled>'.format(self.var_structure.html_input, self.name)
+            html_input += '<input type={} name="data_point_{}" value="{{value}}" readonly disabled>'.format(
+                self.var_structure.html_input, self.name
+            )
 
         if self.allowed_values is None:
             self.attributes["html_input"] = html_input
@@ -279,23 +287,19 @@ class ModuleVariable:
     html_input = property(get_html_input, set_html_input)
 
 
-class ModuleVariableTemplate():
+class ModuleVariableTemplate:
     targetclass = ModuleVariable
-    def __init__(
-            self,
-            name,
-            python_type,
-            **kwargs
-    ):
-        for key,val in kwargs.items():
-            setattr(self, key,val)
+
+    def __init__(self, name, python_type, **kwargs):
+        for key, val in kwargs.items():
+            setattr(self, key, val)
         self.name = name
         self.python_type = python_type
-        self.board=None
+        self.board = None
 
     def initialize(self, instance, name):
-        self.board=instance
+        self.board = instance
         new_var = filter_dict.call_method(self.targetclass, kwargs=self.__dict__)
         new_var.name = name
-        setattr(instance, name,new_var)
+        setattr(instance, name, new_var)
         return new_var

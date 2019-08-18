@@ -33,7 +33,7 @@ WRITE_DATA_FUNCTION = at.Function(
 from arduino_controller.arduino_variable import arduio_variable, ArduinoVariable
 
 
-class ArduinoBoard():
+class ArduinoBoard:
     modules = []
     FIRMWARE = -1
     BAUD = 9600
@@ -63,13 +63,11 @@ class ArduinoBoard():
 
         for module in self.modules:
             self.load_module(module)
-        #print(self._loaded_module_instances)
+        # print(self._loaded_module_instances)
         self.initalize_variables()
-
 
         for module in self._loaded_module_instances:
             module.post_initalization()
-
 
         for attr, ard_var in self._module_variables.items():
             if isinstance(ard_var, ArduinoVariable):
@@ -99,11 +97,9 @@ class ArduinoBoard():
         for attr, modvar in self._module_variables.items():
             modvar.return_self = False
 
-
     def create_ino(self, file=None, obscure=False):
         arduino_code_creator = ArduinoCodeCreator()
         assert self.FIRMWARE > -1, "No Firmware defined"
-
 
         self.firmware = self.FIRMWARE
         for attr, modvar in self._module_variables.items():
@@ -117,7 +113,6 @@ class ArduinoBoard():
         for module_class in module_classes:
             module_class._module_arduino_code(self, arduino_code_creator)
             module_class.module_arduino_code(self, arduino_code_creator)
-
 
         for module in self._loaded_module_instances:
             module._instance_arduino_code(arduino_code_creator)
@@ -134,37 +129,35 @@ class ArduinoBoard():
     def initalize_variables(self):
 
         for module in self._loaded_module_instances:
-            for attribute,tempplate in module.module_variable_templates.items():
+            for attribute, tempplate in module.module_variable_templates.items():
                 tempplate.original_name = attribute
-                i=0
+                i = 0
                 while tempplate.name in self._module_variables:
-                    i+=1
-                    tempplate.name = "{}_{}".format(attribute,i)
-                self._module_variables[tempplate.name] = tempplate.initialize(self,tempplate.name)
-                setattr(module,attribute,self._module_variables[tempplate.name])
+                    i += 1
+                    tempplate.name = "{}_{}".format(attribute, i)
+                self._module_variables[tempplate.name] = tempplate.initialize(
+                    self, tempplate.name
+                )
+                setattr(module, attribute, self._module_variables[tempplate.name])
 
-        #print(self._module_variables)
-
-
+        # print(self._module_variables)
 
     def load_module(self, module):
         """
         :type module: ArduinoBoardModule
         """
         module_instance = module.get_instance(self)
-        if module_instance in self._loaded_module_instances: return module_instance
+        if module_instance in self._loaded_module_instances:
+            return module_instance
 
         for name, submodule in module_instance.get_dependencies().items():
-            setattr(module_instance,name,self.load_module(submodule))
+            setattr(module_instance, name, self.load_module(submodule))
 
-        if module_instance in self._loaded_module_instances: return module_instance
+        if module_instance in self._loaded_module_instances:
+            return module_instance
         self._loaded_module_instances.append(module_instance)
 
         return module_instance
-
-
-
-
 
     def set_update_time(self, update_time):
         self._update_time = update_time
@@ -243,8 +236,10 @@ class ArduinoBoard():
         return None
 
     def add_port_command(self, port_command):
-        assert self.get_portcommand_by_cmd(port_command.byteid) is None and self.get_portcommand_by_name(
-            port_command.name) is None, "byteid of {} {} already defined".format(port_command,port_command.name)
+        assert (
+            self.get_portcommand_by_cmd(port_command.byteid) is None
+            and self.get_portcommand_by_name(port_command.name) is None
+        ), "byteid of {} {} already defined".format(port_command, port_command.name)
         self.port_commands.append(port_command)
         return port_command
 
@@ -252,10 +247,18 @@ class ArduinoBoard():
         return self._module_variables
 
     def get_arduino_vars(self):
-        return {attr:ard_var for attr, ard_var in self.get_module_vars().items() if isinstance(ard_var, ArduinoVariable)}
+        return {
+            attr: ard_var
+            for attr, ard_var in self.get_module_vars().items()
+            if isinstance(ard_var, ArduinoVariable)
+        }
 
     def get_python_vars(self):
-        return {attr:ard_var for attr, ard_var in self.get_module_vars().items() if isinstance(ard_var, PythonVariable)}
+        return {
+            attr: ard_var
+            for attr, ard_var in self.get_module_vars().items()
+            if isinstance(ard_var, PythonVariable)
+        }
 
     def receive_from_port(self, cmd, data):
         self._logger.debug(
@@ -285,7 +288,7 @@ class ArduinoBoard():
             if ard_var.save and attr in data:
                 setattr(self, attr, data[attr])
         for attr, ard_var in self.get_arduino_vars().items():
-            #print(attr)
+            # print(attr)
             if ard_var.eeprom:
                 pc = self.get_portcommand_arduino_getter(ard_var.arduino_getter)
                 if pc is not None:
@@ -303,7 +306,9 @@ class ArduinoBoard():
         board = {"module_variables": {}}
         for attr, mod_var in self.get_module_vars().items():
             if len(mod_var.html_input) > 0:
-                form = mod_var.html_input.replace("{{value}}", str(getattr(self, attr, "")))
+                form = mod_var.html_input.replace(
+                    "{{value}}", str(getattr(self, attr, ""))
+                )
                 board["module_variables"][attr] = {"form": form}
         return board
 
@@ -323,9 +328,10 @@ class ArduinoBoard():
             object.__setattr__(self, attr, value)
 
     def __repr__(self):
-        return "{}({})".format(self.CLASSNAME,self.id)
+        return "{}({})".format(self.CLASSNAME, self.id)
 
-class ArduinoBoardModule():
+
+class ArduinoBoardModule:
     unique = False
     _instances = []
 
@@ -352,15 +358,24 @@ class ArduinoBoardModule():
         if variable.is_data_point:
             BasicBoardModule.dataloop.add_call(
                 WRITE_DATA_FUNCTION(
-                    variable, board.byte_ids.get(board.get_portcommand_by_name(_GET_PREFIX + variable.name).arduino_function)
+                    variable,
+                    board.byte_ids.get(
+                        board.get_portcommand_by_name(
+                            _GET_PREFIX + variable.name
+                        ).arduino_function
+                    ),
                 )
             )
         if variable.eeprom:
-            board.eeprom_position.add_possibility(variable, size=variable.type.byte_size)
-            arduino_code_creator.setup.prepend_call(Eeprom.get(board.eeprom_position.get(variable), variable))
+            board.eeprom_position.add_possibility(
+                variable, size=variable.type.byte_size
+            )
+            arduino_code_creator.setup.prepend_call(
+                Eeprom.get(board.eeprom_position.get(variable), variable)
+            )
 
     @classmethod
-    def _arduino_code_try_to_add_var(cls,variable, board,arduino_code_creator):
+    def _arduino_code_try_to_add_var(cls, variable, board, arduino_code_creator):
         if isinstance(variable, at.Variable):
             if getattr(variable, "add_to_code", True):
                 arduino_code_creator.add(variable)
@@ -386,13 +401,14 @@ class ArduinoBoardModule():
     @classmethod
     def _module_arduino_code(cls, board, arduino_code_creator):
         for name, variable in cls.__dict__.items():
-            cls._arduino_code_try_to_add_var(variable,board,arduino_code_creator)
+            cls._arduino_code_try_to_add_var(variable, board, arduino_code_creator)
 
     def _instance_arduino_code(self, arduino_code_creator):
         for name, variable in self.__dict__.items():
             # print(name,variable.__class__)
-            self._arduino_code_try_to_add_var(variable,self.board,arduino_code_creator)
-
+            self._arduino_code_try_to_add_var(
+                variable, self.board, arduino_code_creator
+            )
 
     @classmethod
     def module_arduino_code(cls, board, arduino_code_creator):
@@ -402,19 +418,19 @@ class ArduinoBoardModule():
         pass
 
     def __repr__(self):
-        return "{}:{}".format(self.__class__.__name__,id(self))
+        return "{}:{}".format(self.__class__.__name__, id(self))
 
     def get_dependencies(self):
         depencies = {}
         for name, dependency in self.__class__.__dict__.items():
             try:
-                if issubclass(dependency,ArduinoBoardModule):
+                if issubclass(dependency, ArduinoBoardModule):
                     depencies[name] = dependency
             except TypeError:
                 pass
         return depencies
 
-    def __init__(self,board):
+    def __init__(self, board):
         self.board = board
         self._instances.append(self)
         self.module_variable_templates = {}
@@ -429,7 +445,7 @@ class ArduinoBoardModule():
                 pass
 
     @classmethod
-    def get_instance(cls,board, *args, **kwargs):
+    def get_instance(cls, board, *args, **kwargs):
         initiate = None
         if cls.unique:
             for instance in cls._instances:
@@ -439,10 +455,7 @@ class ArduinoBoardModule():
         return cls(board)
 
 
-
-
-
-class ArduinoBoard2():
+class ArduinoBoard2:
     FIRMWARE = -1
     CLASSNAME = None
     BAUD = 9600
@@ -454,20 +467,16 @@ class ArduinoBoard2():
         # self.eeprom_position = at.ArduinoEnum("eeprom_position", {})
         # self.byte_ids = at.ArduinoEnum("byte_ids", {})
 
-
         self.loaded_module_instances = []
-        #for module in self.modules:
-       #     self.load_module(module)
+        # for module in self.modules:
+        #     self.load_module(module)
 
         self.initialize_variables()
-
 
         for module in self.loaded_module_instances:
             module.after_added_to_board(board=self)
         for attr, modvar in self._module_variables.items():
             modvar.return_self = False
-
-
 
     def initialize_variables(self):
         for module in self.loaded_module_instances:
@@ -480,17 +489,13 @@ class ArduinoBoard2():
                     set_name = "{}_{}".format(module_variable.name, i)
 
                 variable_instance = module_variable.initialize(self, set_name)
-                #print(module, prename, variable_instance)
+                # print(module, prename, variable_instance)
                 setattr(module, prename, variable_instance)
                 setattr(module, set_name, variable_instance)
                 self._module_variables[set_name] = variable_instance
 
 
-
-
-
-
-class ArduinoBoardModule2():
+class ArduinoBoardModule2:
     unique = False
     _last_instance = None
 
@@ -509,8 +514,8 @@ class ArduinoBoardModule2():
             obj = object.__getattribute__(self, attr)
         if isinstance(obj, ModuleVariable):
             if not obj.return_self:
-                    obj.set_value(self, value)
-                    return
+                obj.set_value(self, value)
+                return
         object.__setattr__(self, attr, value)
 
     # @classmethod
@@ -634,8 +639,14 @@ from arduino_controller.portrequest import (
 
 class BasicBoardModule(ArduinoBoardModule):
     unique = True
-    firmware = arduio_variable(name="firmware", arduino_data_type=uint64_t, arduino_setter=False, default=-1,
-                               save=False, unique=True)
+    firmware = arduio_variable(
+        name="firmware",
+        arduino_data_type=uint64_t,
+        arduino_setter=False,
+        default=-1,
+        save=False,
+        unique=True,
+    )
     arduino_id = arduio_variable(
         arduino_data_type=uint64_t,
         name="arduino_id",
@@ -658,10 +669,10 @@ class BasicBoardModule(ArduinoBoardModule):
         name="data_rate", arduino_data_type=uint32_t, minimum=1, eeprom=True
     )
 
-    dummy8 = at.Variable("dummy8",type=uint8_t)
-    dummy16 = at.Variable("dummy16",type=uint16_t)
-    dummy32 = at.Variable("dummy32",type=uint32_t)
-    dummy64 = at.Variable("dummy64",type=uint64_t)
+    dummy8 = at.Variable("dummy8", type=uint8_t)
+    dummy16 = at.Variable("dummy16", type=uint16_t)
+    dummy32 = at.Variable("dummy32", type=uint32_t)
+    dummy64 = at.Variable("dummy64", type=uint64_t)
 
     STARTANALOG = at.Definition("STARTANALOG", 0)
     STARTBYTE = at.Definition("STARTBYTE", int.from_bytes(STARTBYTE, "big"))
@@ -679,9 +690,11 @@ class BasicBoardModule(ArduinoBoardModule):
     dataloop = at.Function("dataloop")
     arduino_identified = at.Variable(type=bool_, value=0, name="arduino_identified")
     current_time = at.Variable(type=uint32_t, name="current_time")
+
     def post_initalization(self):
-        def _receive_id(board,data):
+        def _receive_id(board, data):
             board.id = np.uint64(data)
+
         identify_portcommand = PortCommand(
             module=self.board,
             name="identify",
@@ -696,21 +709,32 @@ class BasicBoardModule(ArduinoBoardModule):
                     self.arduino_identified.set(
                         COMMAND_FUNCTION_COMMUNICATION_ARGUMENTS[0][0]
                     ),
-                )
+                ),
             ),
         )
-        identify_portcommand.arduino_function.add_call(WRITE_DATA_FUNCTION(self.arduino_id, self.board.byte_ids.get(identify_portcommand.arduino_function)))
-        self.board.add_port_command(
-            identify_portcommand
+        identify_portcommand.arduino_function.add_call(
+            WRITE_DATA_FUNCTION(
+                self.arduino_id,
+                self.board.byte_ids.get(identify_portcommand.arduino_function),
+            )
         )
+        self.board.add_port_command(identify_portcommand)
 
     def instance_arduino_code(self, ad):
         self.MAXFUNCTIONS.value = len(self.board.port_commands)
         self.BAUD.value = self.board.BAUD
-        self.SERIALARRAYSIZE.value = DATABYTEPOSITION + max(*[
-            max(portcommand.receivelength, portcommand.sendlength)
-            for portcommand in self.board.port_commands
-        ], 0, 0) + 2
+        self.SERIALARRAYSIZE.value = (
+            DATABYTEPOSITION
+            + max(
+                *[
+                    max(portcommand.receivelength, portcommand.sendlength)
+                    for portcommand in self.board.port_commands
+                ],
+                0,
+                0
+            )
+            + 2
+        )
 
         ad.add(self.board.eeprom_position)
         ad.add(self.board.byte_ids)
@@ -791,22 +815,30 @@ class BasicBoardModule(ArduinoBoardModule):
             ),
             generate_checksum(writedata, write_data_array.arg3 + self.DATABYTEPOSITION),
             writedata[self.DATABYTEPOSITION + write_data_array.arg3].set(checksum >> 0),
-            writedata[self.DATABYTEPOSITION + write_data_array.arg3 + 1].set(checksum >> 8),
-            Serial.write_buf(writedata, self.DATABYTEPOSITION + write_data_array.arg3 + 2),
+            writedata[self.DATABYTEPOSITION + write_data_array.arg3 + 1].set(
+                checksum >> 8
+            ),
+            Serial.write_buf(
+                writedata, self.DATABYTEPOSITION + write_data_array.arg3 + 2
+            ),
         )
 
         write_data_function = ad.add(WRITE_DATA_FUNCTION)
-        #d = write_data_function.add_variable(
+        # d = write_data_function.add_variable(
         #    at.Array(size=Arduino.sizeof(T), type=uint8_t, name="d")
-        #)
+        # )
         write_data_function.add_call(
-            #for_(
+            # for_(
             #    i,
             #    i < Arduino.sizeof(T),
             #    1,
             #    d[i].set((write_data_function.arg1 >> i * 8 & 0xFF).cast(uint8_t)),
-            #),
-            write_data_array(write_data_function.arg1.to_pointer(), write_data_function.arg2, Arduino.sizeof(T)),
+            # ),
+            write_data_array(
+                write_data_function.arg1.to_pointer(),
+                write_data_function.arg2,
+                Arduino.sizeof(T),
+            )
         )
 
         check_uuid = ad.add(
@@ -838,7 +870,9 @@ class BasicBoardModule(ArduinoBoardModule):
                     generate_checksum(
                         self.arduino_id.to_pointer(), Arduino.sizeof(self.arduino_id)
                     ),
-                    Eeprom.put(self.board.eeprom_position.get(self.arduino_id_cs), checksum),
+                    Eeprom.put(
+                        self.board.eeprom_position.get(self.arduino_id_cs), checksum
+                    ),
                 ),
             ),
         )
@@ -883,7 +917,10 @@ class BasicBoardModule(ArduinoBoardModule):
         )
         get_cmd_index.add_call(
             for_(
-                i, i < self.MAXFUNCTIONS, 1, if_(cmds[i] == get_cmd_index.arg1, return_(i))
+                i,
+                i < self.MAXFUNCTIONS,
+                1,
+                if_(cmds[i] == get_cmd_index.arg1, return_(i)),
             ),
             return_(255),
         )
@@ -904,10 +941,12 @@ class BasicBoardModule(ArduinoBoardModule):
             if_(
                 checksum
                 == (
-                        (
-                            serialread[self.DATABYTEPOSITION + serialread[self.LENBYTEPOSITION] + 1]
-                        ).cast(uint16_t)
-                        * 256
+                    (
+                        serialread[
+                            self.DATABYTEPOSITION + serialread[self.LENBYTEPOSITION] + 1
+                        ]
+                    ).cast(uint16_t)
+                    * 256
                 )
                 + serialread[self.DATABYTEPOSITION + serialread[self.LENBYTEPOSITION]],
                 code=(
@@ -1019,7 +1058,6 @@ class BasicBoardModule(ArduinoBoardModule):
 class BasicBoard(ArduinoBoard):
     FIRMWARE = 0
     modules = [BasicBoardModule]
-
 
 
 if __name__ == "__main__":

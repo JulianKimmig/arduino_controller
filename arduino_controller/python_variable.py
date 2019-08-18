@@ -1,13 +1,17 @@
 import numpy as np
 
-from arduino_controller.modul_variable import ModuleVariable, ModuleVarianbleStruct, ModuleVariableTemplate
+from arduino_controller.modul_variable import (
+    ModuleVariable,
+    ModuleVarianbleStruct,
+    ModuleVariableTemplate,
+)
 
 
 class PythonVariable(ModuleVariable):
     def __init__(
         self,
         name,
-            board,
+        board,
         type=np.float,
         html_input=None,
         python_variable_struc=None,
@@ -21,7 +25,7 @@ class PythonVariable(ModuleVariable):
         allowed_values=None,
         nullable=True,
         changeable=None,
-            html_attributes = None
+        html_attributes=None,
     ):
 
         super().__init__(
@@ -40,13 +44,15 @@ class PythonVariable(ModuleVariable):
             allowed_values=allowed_values,
             nullable=nullable,
             changeable=changeable,
-            html_attributes=html_attributes
+            html_attributes=html_attributes,
         )
 
 
 class PythonVariableTemplate(ModuleVariableTemplate):
     targetclass = PythonVariable
-    def __init__(self, name, type=np.float,**kwargs):
-        super().__init__(name=name,python_type=type,type=type,**kwargs)
+
+    def __init__(self, name, type=np.float, **kwargs):
+        super().__init__(name=name, python_type=type, type=type, **kwargs)
+
 
 python_variable = PythonVariableTemplate

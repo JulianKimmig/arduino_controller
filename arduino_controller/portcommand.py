@@ -54,7 +54,7 @@ class PortCommand:
             self.arduino_function.name = "{}_{}".format(
                 self.arduino_function.name, self.byteid
             )
-            self.module.byte_ids.add_possibility(self.arduino_function,self.byteid)
+            self.module.byte_ids.add_possibility(self.arduino_function, self.byteid)
         else:
             self.arduino_function = None
 
@@ -71,7 +71,7 @@ class PortCommand:
 
     def receive(self, nparray):
         # print(self.python_receivetype,nparray)
-        #print(nparray,self.python_receivetype)
+        # print(nparray,self.python_receivetype)
         self.receivefunction(
             self.module,
             np.frombuffer(nparray, dtype=self.python_receivetype)[0]

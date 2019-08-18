@@ -46,14 +46,8 @@ DEFAULT_STRUCTURES = {
         ]
     },
     **{
-        nptype: ModuleVarianbleStruct(
-            python_type=nptype,
-            html_input="number",
-        )
-        for nptype in [
-            np.double,
-            np.float
-        ]
+        nptype: ModuleVarianbleStruct(python_type=nptype, html_input="number")
+        for nptype in [np.double, np.float]
     },
     bool: ModuleVarianbleStruct(python_type=bool, html_input="checkbox"),
 }
@@ -226,7 +220,9 @@ class ModuleVariable:
             html_input = ""
 
         if self.is_data_point:
-            html_input += '<input type={} name="data_point_{}" value="{{value}}" readonly disabled>'.format(self.var_structure.html_input, self.name)
+            html_input += '<input type={} name="data_point_{}" value="{{value}}" readonly disabled>'.format(
+                self.var_structure.html_input, self.name
+            )
 
         if self.allowed_values is None:
             self.attributes["html_input"] = html_input

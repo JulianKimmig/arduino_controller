@@ -188,7 +188,7 @@ class SerialReader:
                         pass
             time.sleep(self.port_check_time)
 
-    def get_port(self,port):
+    def get_port(self, port):
         for sp in self.identified_ports:
             if sp.port == port:
                 return sp

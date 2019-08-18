@@ -16,16 +16,20 @@ from arduino_controller.serialreader.serialreader import SerialReaderDataTarget
 from arduino_controller import parseboards
 from json_dict import JsonDict
 
-def api_function(visible=True,**kwargs):
+
+def api_function(visible=True, **kwargs):
     def func_wrap(func):
-        def api_func_warper(*args,**kwargs):
-            threading.Thread(target=func,args=args,kwargs=kwargs).start()
-        api_func_warper.api_function=True
-        api_func_warper.visible=visible
-        for n,t in kwargs.items():
-            setattr(api_func_warper,n,t)
+        def api_func_warper(*args, **kwargs):
+            threading.Thread(target=func, args=args, kwargs=kwargs).start()
+
+        api_func_warper.api_function = True
+        api_func_warper.visible = visible
+        for n, t in kwargs.items():
+            setattr(api_func_warper, n, t)
         return api_func_warper
+
     return func_wrap
+
 
 class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     required_boards = []
@@ -42,21 +46,32 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
         self.config = (
             JsonDict(
                 os.path.join(
-                    os.path.expanduser("~"), ".{}".format(self.__class__.__name__), "portdata.json"
+                    os.path.expanduser("~"),
+                    ".{}".format(self.__class__.__name__),
+                    "portdata.json",
                 )
             )
             if config is None
             else config
         )
         self.possible_boards = [set() for board in self.required_boards]
-        if self.config.get('api_name', default=self.__class__.__name__) != self.__class__.__name__:
+        if (
+            self.config.get("api_name", default=self.__class__.__name__)
+            != self.__class__.__name__
+        ):
             self.config.data = {}
-            self.config.put('api_name', value=self.__class__.__name__)
-            self.config.put('linked_boards', value=[None for board in self.required_boards])
+            self.config.put("api_name", value=self.__class__.__name__)
+            self.config.put(
+                "linked_boards", value=[None for board in self.required_boards]
+            )
 
         self.linked_boards = [None for board in self.required_boards]
-        if len(self.config.get('linked_boards', default=self.linked_boards)) != len(self.linked_boards):
-            self.config.put('linked_boards', value=[None for board in self.required_boards])
+        if len(self.config.get("linked_boards", default=self.linked_boards)) != len(
+            self.linked_boards
+        ):
+            self.config.put(
+                "linked_boards", value=[None for board in self.required_boards]
+            )
 
         for board in self.required_boards:
             parseboards.add_board(board)
@@ -81,10 +96,16 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
 
     serial_reader = property(get_serial_reader, set_serial_reader)
 
-    def set_ports(self, available_ports, ignored_ports, connected_ports, identified_ports):
-        proposed_linked_boards = self.config.get('linked_boards', default=self.linked_boards)
-        identified_ports = [self.serial_reader.get_port(identified_port["port"]) for identified_port in
-                            identified_ports]
+    def set_ports(
+        self, available_ports, ignored_ports, connected_ports, identified_ports
+    ):
+        proposed_linked_boards = self.config.get(
+            "linked_boards", default=self.linked_boards
+        )
+        identified_ports = [
+            self.serial_reader.get_port(identified_port["port"])
+            for identified_port in identified_ports
+        ]
         change = False
         for identified_port in identified_ports:
             board = identified_port.board
@@ -93,7 +114,8 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
                 continue
             # link all already proposed  boards
             for i in range(len(proposed_linked_boards)):
-                if self.linked_boards[i] is not None: continue
+                if self.linked_boards[i] is not None:
+                    continue
                 if proposed_linked_boards[i] == board.id:
                     self.link_board(i, board)
                     change = True
@@ -104,9 +126,11 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
                         self.possible_boards[i].add(board)
                         change = True
                     # if already linked skip
-                    if self.linked_boards[i] is not None: continue
+                    if self.linked_boards[i] is not None:
+                        continue
                     # if already reserved for another board
-                    if proposed_linked_boards[i] is not None: continue
+                    if proposed_linked_boards[i] is not None:
+                        continue
                     # if matching board
                     self.link_board(i, board)
                     change = True
@@ -128,20 +152,25 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
         """
         if board is None:
             return self.unlink_board(i)
-        linked_boards = self.config.get('linked_boards', default=self.linked_boards)
+        linked_boards = self.config.get("linked_boards", default=self.linked_boards)
         linked_boards[i] = board.id
         self.linked_boards[i] = board
-        self.logger.info("link board {}({}) to index {}".format(board.id, board.__class__.__name__, i))
-        self.config.put('linked_boards', value=linked_boards)
+        self.logger.info(
+            "link board {}({}) to index {}".format(
+                board.id, board.__class__.__name__, i
+            )
+        )
+        self.config.put("linked_boards", value=linked_boards)
 
     def unlink_board(self, i):
-        linked_boards = self.config.get('linked_boards', default=self.linked_boards)
+        linked_boards = self.config.get("linked_boards", default=self.linked_boards)
         board = self.linked_boards[i]
-        if board is None: return
+        if board is None:
+            return
         linked_boards[i] = None
         self.linked_boards[i] = None
         self.logger.info("unlink board from index {}".format(i))
-        self.config.put('linked_boards', value=linked_boards)
+        self.config.put("linked_boards", value=linked_boards)
 
         # remove from board possibilities
         for i in range(len(self.possible_boards)):
@@ -170,27 +199,31 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
             self._ws_targets.remove(receiver)
 
     def get_boards(self):
-        return dict(required_boards=[b.__name__ for b in self.required_boards], possible_boards=self.possible_boards,
-                    linked_boards=self.linked_boards)
+        return dict(
+            required_boards=[b.__name__ for b in self.required_boards],
+            possible_boards=self.possible_boards,
+            linked_boards=self.linked_boards,
+        )
 
     def get_status(self):
         status = True
         if None in self.linked_boards:
-            return dict(status=False,reason="not all boards linked")
+            return dict(status=False, reason="not all boards linked")
         return dict(status=True)
 
     def get_functions(self):
         functions = {}
         for method in dir(self):
             try:
-                m = getattr(self,method)
+                m = getattr(self, method)
                 if m.api_function:
-                    functions[method]=m.__dict__
+                    functions[method] = m.__dict__
             except AttributeError:
                 pass
         return functions
 
-class ArduinoAPIWebsocketConsumer():
+
+class ArduinoAPIWebsocketConsumer:
     apis = list()
     instances = set()
     logger = logging.getLogger("ArduinoAPIWebsocketConsumer")
@@ -206,7 +239,9 @@ class ArduinoAPIWebsocketConsumer():
                 if api not in instance.apis:
                     instance.apis.append(api)
                 api.add_ws_target(instance)
-                instance.to_client(dict(cmd="set_apis", data=instance.get_apis()), type="cmd")
+                instance.to_client(
+                    dict(cmd="set_apis", data=instance.get_apis()), type="cmd"
+                )
 
     @classmethod
     def register_at_apis(cls, receiver):
@@ -235,26 +270,32 @@ class ArduinoAPIWebsocketConsumer():
             self.logger.exception(e)
 
     def parse_command(self, data):
-        if hasattr(self, data['cmd']) and not 'api' in data["data"]:
-            answer = filter_dict.call_method(getattr(self, data['cmd']), kwargs=data["data"])
+        if hasattr(self, data["cmd"]) and not "api" in data["data"]:
+            answer = filter_dict.call_method(
+                getattr(self, data["cmd"]), kwargs=data["data"]
+            )
         else:
             api = data["data"]["api"]
             del data["data"]["api"]
-            answer = filter_dict.call_method(getattr(self.apis[api], data['cmd']), kwargs=data["data"])
+            answer = filter_dict.call_method(
+                getattr(self.apis[api], data["cmd"]), kwargs=data["data"]
+            )
             if answer is not None:
                 if not isinstance(answer, dict):
-                    answer = {'data': answer}
-                answer['api_position'] = api
+                    answer = {"data": answer}
+                answer["api_position"] = api
         if answer is not None:
-            self.to_client(dict(cmd=data['cmd'].replace("get_", "set_"), data=answer), type="cmd")
+            self.to_client(
+                dict(cmd=data["cmd"].replace("get_", "set_"), data=answer), type="cmd"
+            )
 
     def get_apis(self):
         return self.apis
 
     def send_boards(self, api):
         data = api.get_boards()
-        data['api_position'] = self.apis.index(api)
-        self.to_client(dict(cmd='set_boards', data=data), type="cmd")
+        data["api_position"] = self.apis.index(api)
+        self.to_client(dict(cmd="set_boards", data=data), type="cmd")
 
     def to_client(self, data=None, type=None):
         raise AttributeError("no valid to_client function implemented")
@@ -264,8 +305,9 @@ class ArduinoAPIWebsocketConsumer():
 
     def broadcast_status(self):
         try:
-            self.to_client(dict(cmd='set_status', data=self.get_status()), type="cmd")
-        except:pass
+            self.to_client(dict(cmd="set_status", data=self.get_status()), type="cmd")
+        except:
+            pass
 
     def broadcast(self):
         while self.broadcasting:
