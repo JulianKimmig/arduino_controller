@@ -19,8 +19,11 @@ from json_dict import JsonDict
 
 def api_function(visible=True, **kwargs):
     def func_wrap(func):
-        def api_func_warper(*args, **kwargs):
-            threading.Thread(target=func, args=args, kwargs=kwargs).start()
+        def api_func_warper(*args,api_function_blocking=False, **kwargs):
+            if not api_function_blocking:
+                threading.Thread(target=func, args=args, kwargs=kwargs).start()
+            else:
+                return func(*args,**kwargs)
 
         api_func_warper.api_function = True
         api_func_warper.visible = visible
@@ -54,7 +57,7 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
             if config is None
             else config
         )
-        self.possible_boards = [set() for board in self.required_boards]
+        self.possible_boards = [[] for board in self.required_boards]
         if (
             self.config.get("api_name", default=self.__class__.__name__)
             != self.__class__.__name__
@@ -99,9 +102,10 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     def set_ports(
         self, available_ports, ignored_ports, connected_ports, identified_ports
     ):
-        proposed_linked_boards = self.config.get(
-            "linked_boards", default=self.linked_boards
-        )
+        proposed_linked_boards = [int(b) for b in self.config.get(
+            "linked_boards", default=self.linked_boards,
+        )]
+
         identified_ports = [
             self.serial_reader.get_port(identified_port["port"])
             for identified_port in identified_ports
@@ -116,6 +120,7 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
             for i in range(len(proposed_linked_boards)):
                 if self.linked_boards[i] is not None:
                     continue
+                print(proposed_linked_boards,board.id)
                 if proposed_linked_boards[i] == board.id:
                     self.link_board(i, board)
                     change = True
@@ -123,7 +128,7 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
             for i in range(len(self.required_boards)):
                 if board.__class__ == self.required_boards[i]:
                     if board not in self.possible_boards[i]:
-                        self.possible_boards[i].add(board)
+                        self.possible_boards[i].append(board)
                         change = True
                     # if already linked skip
                     if self.linked_boards[i] is not None:
@@ -145,11 +150,20 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
             for target in self._ws_targets:
                 target.send_boards(self)
 
+    def link_possible_board(self,index,possible_index):
+        try:
+            print(self.possible_boards)
+            print(index,possible_index)
+            self.link_board(index,self.possible_boards[index][possible_index])
+        except Exception as e:
+            self.logger.exception(e)
+
     def link_board(self, i, board):
         """
         :param i: int
         :type board: ArduinoBoard
         """
+        assert board.__class__ == self.required_boards[i], "the board you try o link({}) is not of the required type ({})".format(board,self.required_boards[i])
         if board is None:
             return self.unlink_board(i)
         linked_boards = self.config.get("linked_boards", default=self.linked_boards)
@@ -207,6 +221,7 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
 
     def get_status(self):
         status = True
+        print("a",self.linked_boards)
         if None in self.linked_boards:
             return dict(status=False, reason="not all boards linked")
         return dict(status=True)
@@ -225,9 +240,10 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
 
 class ArduinoAPIWebsocketConsumer:
     apis = list()
-    instances = set()
+    active_consumer = None
     logger = logging.getLogger("ArduinoAPIWebsocketConsumer")
-
+    reset_time = 3
+    accepting = True
     @classmethod
     def register_api(cls, api):
         """
@@ -235,20 +251,36 @@ class ArduinoAPIWebsocketConsumer:
         """
         if api not in cls.apis:
             cls.apis.append(api)
-            for instance in cls.instances:
-                if api not in instance.apis:
-                    instance.apis.append(api)
-                api.add_ws_target(instance)
-                instance.to_client(
-                    dict(cmd="set_apis", data=instance.get_apis()), type="cmd"
+            if cls.active_consumer is not None:
+                if api not in cls.active_consumer.apis:
+                    cls.active_consumer.apis.append(api)
+                api.add_ws_target(cls.active_consumer)
+                cls.active_consumer.to_client(
+                    dict(cmd="set_apis", data=cls.active_consumer.get_apis()), type="cmd"
                 )
 
     @classmethod
     def register_at_apis(cls, receiver):
-
-        cls.instances.add(receiver)
-        for api in cls.apis:
-            api.add_ws_target(receiver)
+        if not cls.accepting: return False
+        cls.accepting = False
+        if cls.active_consumer is not None:
+            t= time.time()
+            cls.active_consumer.status = False
+            while cls.active_consumer.status is False and time.time()-t<cls.reset_time:
+                cls.active_consumer.to_client(dict(cmd="get_status"),type="cmd")
+                time.sleep(0.5)
+            if cls.active_consumer.status is False:
+                cls.active_consumer.to_client(data=dict(cmd="error",message="client did not respond"), type="cmd")
+                cls.active_consumer.close_api_reciever()
+                cls.active_consumer = None
+            cls.accepting = True
+            return False
+        else:
+            cls.active_consumer = receiver
+            for api in cls.apis:
+                api.add_ws_target(receiver)
+            cls.accepting = True
+            return True
 
     @classmethod
     def unregister_at_apis(cls, receiver):
@@ -313,6 +345,10 @@ class ArduinoAPIWebsocketConsumer:
         while self.broadcasting:
             self.broadcast_status()
             time.sleep(3)
+
+    def close_api_reciever(self):
+        self.broadcasting = False
+        self.unregister_at_apis(self)
 
     def start_broadcast(self):
         self.broadcasting = True
