@@ -573,7 +573,7 @@ class ArduinoBasicBoard:
                         checkuuidvar,
                         checkuuidvar < Arduino.sizeof(self.arduino_id),
                         1,
-                        Eeprom.write(i, Arduino.random()),
+                        Eeprom.put(i, Arduino.random()),
                     ),
                     Eeprom.get(
                         self.eeprom_position.get(self.arduino_id), self.arduino_id
