@@ -136,11 +136,13 @@ class SerialPort(serial.Serial):
         )
         if x is None:
             x = t
-        for data_target in self.data_targets:
-            filter_dict.call_method(
-                target=data_target.port_data_point,
-                kwargs=dict(key=key, x=x, y=y, port=board.port, board=board.id),
-            )
+            try:
+                for data_target in self.data_targets:
+                    filter_dict.call_method(
+                        target=data_target.port_data_point,
+                        kwargs=dict(key=key, x=x, y=y, port=board.port, board=board.id),
+                    )
+            except RuntimeError:pass
 
     def set_board(self, board_class):
         self.board = board_class()

@@ -66,3 +66,14 @@ class DataLogger:
             return key, x, y
 
         return None, None, None
+
+    def save(self,file,header_dict={}):
+        header = '\n'.join(
+            ["#{}={}".format(key,value)
+                for key,value in header_dict.items()
+             ]
+        )
+        with open(file, 'w+') as f:
+            for line in header:
+                f.write(line)
+            self._df.to_csv(f)
