@@ -329,15 +329,18 @@ class ArduinoAPIWebsocketConsumer:
         if cls.active_consumer is not None:
             t= time.time()
             cls.active_consumer.status = False
-            while cls.active_consumer.status is False and time.time()-t<cls.reset_time:
-                cls.active_consumer.to_client(dict(cmd="get_status"),type="cmd")
-                time.sleep(0.5)
-            if cls.active_consumer.status is False:
-                cls.active_consumer.to_client(data=dict(cmd="error",message="client did not respond"), type="cmd")
-                cls.active_consumer.close_api_reciever()
-                cls.active_consumer = None
-            cls.accepting = True
-            return False
+            try:
+                while cls.active_consumer.status is False and time.time()-t<cls.reset_time:
+                    cls.active_consumer.to_client(dict(cmd="get_status"),type="cmd")
+                    time.sleep(0.5)
+                if cls.active_consumer.status is False:
+                    cls.active_consumer.to_client(data=dict(cmd="error",message="client did not respond"), type="cmd")
+                    cls.active_consumer.close_api_reciever()
+                    cls.active_consumer = None
+                cls.accepting = True
+                return False
+            except:
+                return cls.register_at_apis(receiver)
         else:
             cls.active_consumer = receiver
             for api in cls.apis:
