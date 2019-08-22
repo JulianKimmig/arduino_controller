@@ -101,10 +101,10 @@ class ArduinoBoard:
         arduino_code_creator = ArduinoCodeCreator()
         assert self.FIRMWARE > -1, "No Firmware defined"
 
-        self.firmware = self.FIRMWARE
+        #self.firmware = self.FIRMWARE
         for attr, modvar in self._module_variables.items():
             modvar.return_self = True
-
+        self.firmware.value = self.FIRMWARE
         module_classes = []
         for module in self._loaded_module_instances:
             if module.__class__ not in module_classes:
@@ -690,6 +690,7 @@ class BasicBoardModule(ArduinoBoardModule):
     dataloop = at.Function("dataloop")
     arduino_identified = at.Variable(type=bool_, value=0, name="arduino_identified")
     current_time = at.Variable(type=uint32_t, name="current_time")
+    last_time = at.Variable(type=uint32_t, name="last_time")
 
     def post_initalization(self):
         def _receive_id(board, data):
@@ -1040,6 +1041,7 @@ class BasicBoardModule(ArduinoBoardModule):
             ),
             check_uuid(),
             for_(i, i < self.MAXFUNCTIONS, 1, cmds[i].set(255)),
+            self.last_time.set(self.current_time),
             self.current_time.set(Arduino.millis()),
             *[
                 add_command(

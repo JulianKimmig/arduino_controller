@@ -42,6 +42,8 @@ class ArduinoVariable(ACCArdVar, ModuleVariable):
             eeprom = False
         if add_to_code is None:
             add_to_code = True
+        if arduino_setter is False:
+            setter = False
 
         ACCArdVar.__init__(self, type=arduino_data_type, value=default, name=name)
 

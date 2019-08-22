@@ -22,6 +22,7 @@ def api_run_fuction(func):
         if self.running:
             return False
         self.running = True
+        self.pause = False
         self.logger.info("start running operation")
         try:
             func(self,*args, **kwargs)
@@ -31,6 +32,7 @@ def api_run_fuction(func):
             return False
         self.logger.info("end running operation")
         self.running = False
+        self.pause = False
         return True
 
     return func_wrap
@@ -58,7 +60,9 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     required_boards = []
     STATUS = {0:"ok",
               1:"not all boards linked",
-              2: "program running"}
+              2: "program running",
+              3: "program paused"
+              }
 
     def port_data_point(self, key, x, y, port, board):
        # board = str(board)
@@ -75,6 +79,7 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
         self.data_logger=DataLogger()
         self._data=dict()
         self.running = False
+        self.pause = False
         self._ws_targets = set()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("start API {}".format(self.__class__.__name__))
@@ -241,6 +246,15 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     def add_ws_target(self, receiver):
         self._ws_targets.add(receiver)
 
+    def pause_run(self):
+        self.pause = True
+
+    def continue_run(self):
+        self.pause = False
+
+    def stop_run(self):
+        self.running = False
+
     def remove_ws_target(self, receiver):
         if receiver in self._ws_targets:
             self._ws_targets.remove(receiver)
@@ -255,6 +269,8 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
     def get_status(self):
         if None in self.linked_boards:
             return dict(status=False, reason=self.STATUS[1],code=1)
+        if self.pause:
+            return dict(status=False, reason=self.STATUS[3],code=3)
         if self.running:
             return dict(status=False, reason=self.STATUS[2],code=2)
 
