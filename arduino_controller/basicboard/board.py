@@ -101,7 +101,7 @@ class ArduinoBoard:
         arduino_code_creator = ArduinoCodeCreator()
         assert self.FIRMWARE > -1, "No Firmware defined"
 
-        #self.firmware = self.FIRMWARE
+        # self.firmware = self.FIRMWARE
         for attr, modvar in self._module_variables.items():
             modvar.return_self = True
         self.firmware.value = self.FIRMWARE

@@ -61,7 +61,7 @@ class PortCommand:
     def defaultsendfunction(self, numericaldata=None):
         if self.python_sendtype is not None:
             if numericaldata is None:
-                data = np.frombuffer(bytearray(),dtype=self.python_sendtype).tobytes()
+                data = np.frombuffer(bytearray(), dtype=self.python_sendtype).tobytes()
             else:
                 data = np.array([numericaldata], dtype=self.python_sendtype).tobytes()
         else:
@@ -73,7 +73,7 @@ class PortCommand:
     def receive(self, nparray):
         # print(self.python_receivetype,nparray)
         # print(nparray,self.python_receivetype)
-        #print(self.name,np.frombuffer(nparray, dtype=self.python_receivetype)[0])
+        # print(self.name,np.frombuffer(nparray, dtype=self.python_receivetype)[0])
         self.receivefunction(
             self.module,
             np.frombuffer(nparray, dtype=self.python_receivetype)[0]

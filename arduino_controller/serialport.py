@@ -142,7 +142,8 @@ class SerialPort(serial.Serial):
                         target=data_target.port_data_point,
                         kwargs=dict(key=key, x=x, y=y, port=board.port, board=board.id),
                     )
-            except RuntimeError:pass
+            except RuntimeError:
+                pass
 
     def set_board(self, board_class):
         self.board = board_class()

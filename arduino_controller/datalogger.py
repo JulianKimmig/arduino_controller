@@ -42,7 +42,7 @@ class DataLogger:
         self._last_added_data = {}
         self._last_not_added_data = {}
 
-    def add_datapoint(self, key, y, x=None,force=False):
+    def add_datapoint(self, key, y, x=None, force=False):
         if x is None:
             x = int(time.time() * 1000)
 
@@ -54,7 +54,10 @@ class DataLogger:
 
         add_data = True
         if self._last_added_data[key] is not None:
-            if abs(y - self._last_added_data[key][1]) <= self._min_y_diff[key] and not force:
+            if (
+                abs(y - self._last_added_data[key][1]) <= self._min_y_diff[key]
+                and not force
+            ):
                 self._last_not_added_data[key] = (x, y)
                 add_data = False
             else:
@@ -75,13 +78,11 @@ class DataLogger:
 
         return None, None, None
 
-    def save(self,file,header_dict={}):
-        header = '\n'.join(
-            ["#{}={}".format(key,value)
-                for key,value in header_dict.items()
-             ]
+    def save(self, file, header_dict={}):
+        header = "\n".join(
+            ["#{}={}".format(key, value) for key, value in header_dict.items()]
         )
-        with open(file, 'w+') as f:
+        with open(file, "w+") as f:
             for line in header:
                 f.write(line)
             self._df.to_csv(f)
