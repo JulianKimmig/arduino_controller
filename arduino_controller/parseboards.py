@@ -50,7 +50,6 @@ class PathBoardSource(BoardSource):
                 for name, obj in inspect.getmembers(foo):
                     if inspect.isclass(obj):
                         try:
-                            fw = getattr(obj, "FIRMWARE")
                             add_board(obj)
                         except:
                             pass

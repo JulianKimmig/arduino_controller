@@ -1,3 +1,4 @@
+requests
 Json-Dict
 FilterDict
 pyserial
