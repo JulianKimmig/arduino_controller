@@ -1,21 +1,16 @@
+import json
+import logging
+import os
+import threading
 import time
 
-from typing import Set, Any
-
-import json
-import os
-
-import logging
-import threading
-
 import filter_dict
+from arduino_controller import parseboards
 from arduino_controller.datalogger import DataLogger
 from arduino_controller.serialport import SerialPortDataTarget
-
 from arduino_controller.serialreader.serialreader import SerialReaderDataTarget
-
-from arduino_controller import parseboards
 from json_dict import JsonDict
+
 
 def api_run_fuction(func):
     def func_wrap(self,*args, **kwargs):
@@ -28,11 +23,10 @@ def api_run_fuction(func):
             func(self,*args, **kwargs)
         except Exception as e:
             self.logger.exception(e)
-            self.running = False
+            self.stop_run()
             return False
         self.logger.info("end running operation")
-        self.running = False
-        self.pause = False
+        self.stop_run()
         return True
 
     return func_wrap
@@ -76,6 +70,7 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
         :type serial_reader: SerialReader
         """
         super().__init__()
+        self._on_stop_functions = []
         self.data_logger=DataLogger()
         self._data=dict()
         self.running = False
@@ -158,7 +153,6 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
             for i in range(len(proposed_linked_boards)):
                 if self.linked_boards[i] is not None:
                     continue
-                print(proposed_linked_boards,board.id)
                 if proposed_linked_boards[i] == board.id:
                     self.link_board(i, board)
                     change = True
@@ -254,6 +248,12 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
 
     def stop_run(self):
         self.running = False
+        self.pause = False
+        for func in self._on_stop_functions:
+            func()
+
+    def on_stop(self, func):
+        self._on_stop_functions.append(func)
 
     def remove_ws_target(self, receiver):
         if receiver in self._ws_targets:
@@ -277,6 +277,9 @@ class BoardApi(SerialReaderDataTarget, SerialPortDataTarget):
         return dict(status=True,reason=self.STATUS[0],code=0)
 
     def get_data(self):
+        for linked_board in self.linked_boards:
+            for key,item in linked_board.get_all_variable_values().items():
+                self.port_data_point(key=key,x=None,y=item,port=linked_board.port,board=linked_board.id)
         return self._data
 
     def get_running_data(self):

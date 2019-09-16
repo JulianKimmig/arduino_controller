@@ -19,6 +19,14 @@ class DataLogger:
 
     def get_serializable_data(self, key=None):
         data = self.get_data(key=key)
+
+        for key in data.columns:
+            if self._last_not_added_data[key] is not None:
+                if self._last_not_added_data[key][0] not in data.index:
+                    data.loc[self._last_not_added_data[key][0]] = np.nan
+                data[key][
+                    self._last_not_added_data[key][0]
+                ] = self._last_not_added_data[key][1]
         return data.to_dict()
 
     def get_data(self, key=None):
@@ -34,7 +42,7 @@ class DataLogger:
         self._last_added_data = {}
         self._last_not_added_data = {}
 
-    def add_datapoint(self, key, y, x=None):
+    def add_datapoint(self, key, y, x=None,force=False):
         if x is None:
             x = int(time.time() * 1000)
 
@@ -46,7 +54,7 @@ class DataLogger:
 
         add_data = True
         if self._last_added_data[key] is not None:
-            if abs(y - self._last_added_data[key][1]) < self._min_y_diff[key]:
+            if abs(y - self._last_added_data[key][1]) <= self._min_y_diff[key] and not force:
                 self._last_not_added_data[key] = (x, y)
                 add_data = False
             else:

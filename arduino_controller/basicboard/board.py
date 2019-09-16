@@ -284,16 +284,24 @@ class ArduinoBoard:
             self._serial_port.add_data_point(self, str(name), y=data, x=None)
 
     def restore(self, data):
+        for attr, ard_var in self.get_arduino_vars().items():
+            # print(attr)
+            if ard_var.arduino_getter:
+                pc = self.get_portcommand_arduino_getter(ard_var.arduino_getter)
+                if pc is not None:
+                    if pc is not None:
+                        pc.sendfunction(0)
+        time.sleep(1)
         for attr, ard_var in self.get_module_vars().items():
             if ard_var.save and attr in data:
                 setattr(self, attr, data[attr])
-        for attr, ard_var in self.get_arduino_vars().items():
-            # print(attr)
-            if ard_var.eeprom:
-                pc = self.get_portcommand_arduino_getter(ard_var.arduino_getter)
-                if pc is not None:
-                    pc.sendfunction(0)
             # print(attr, self.get_portcommand_arduino_getter(ard_var.arduino_getter))
+
+    def get_all_variable_values(self):
+        data = {}
+        for attr, py_var in self.get_module_vars().items():
+            data[attr] = py_var.value
+        return data
 
     def save(self):
         data = {}
@@ -1018,6 +1026,7 @@ class BasicBoardModule(ArduinoBoardModule):
 
         ad.loop.add_call(
             readloop(),
+            self.last_time.set(self.current_time),
             self.current_time.set(Arduino.millis()),
             if_(
                 (self.current_time - last_data > self.board.data_rate).and_(
@@ -1041,8 +1050,8 @@ class BasicBoardModule(ArduinoBoardModule):
             ),
             check_uuid(),
             for_(i, i < self.MAXFUNCTIONS, 1, cmds[i].set(255)),
-            self.last_time.set(self.current_time),
             self.current_time.set(Arduino.millis()),
+            self.last_time.set(self.current_time),
             *[
                 add_command(
                     self.board.byte_ids.get(portcommand.arduino_function),
