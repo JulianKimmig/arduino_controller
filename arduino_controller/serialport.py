@@ -220,13 +220,16 @@ class SerialPort(serial.Serial):
                     t = self.to_write.pop()
                     self.logger.debug("write to " + self.port + ": " + str(t))
                     super().write(t)
-                c = self.read()
-
-                while len(c) > 0:
-                    # print(ord(c),c)
-                    self.read_buffer.append(c)
-                    validate_buffer(self)
+                if self.is_open:
                     c = self.read()
+
+                    while len(c) > 0:
+                        # print(ord(c),c)
+                        self.read_buffer.append(c)
+                        validate_buffer(self)
+                        if not self.is_open:
+                            break
+                        c = self.read()
             # except serial.serialutil.SerialException as e:
             #    self.logger.exception(e)
             # except AttributeError:
