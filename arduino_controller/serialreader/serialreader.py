@@ -49,7 +49,8 @@ class SerialReader:
         self.connected_ports = set()
         self.available_ports = set()
         self.identified_ports = set()
-
+        self.running = False
+        self.read_thread = None
         # self.datalogger = DataLogger() if datalogger is None else datalogger
 
         self.config = (
@@ -83,7 +84,10 @@ class SerialReader:
         return None
 
     def run_in_background(self):
-        threading.Thread(target=self.read_forever).start()
+        if self.read_thread is not None:
+            self.stop()
+        self.read_thread = threading.Thread(target=self.read_forever)
+        self.read_thread.start()
 
     def reactivate_port(self, port=None):
         if port is None:
@@ -152,8 +156,17 @@ class SerialReader:
 
     get_ports = send_ports
 
+    def stop(self):
+        self.running = False
+        if self.read_thread is not None:
+            self.read_thread.join(timeout=2*self.port_check_time)
+            self.read_thread = None
+        for port in self.connected_ports.union(self.identified_ports):
+            port.stop_read()
+
     def read_forever(self):
-        while 1:
+        self.running = True
+        while self.running:
             if self.auto_check_ports:
                 self.available_ports, self.ignored_ports = serialdetector.get_avalable_serial_ports(
                     ignore=self.ignored_ports
