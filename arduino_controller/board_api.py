@@ -36,7 +36,7 @@ def api_function(visible=True, **kwargs):
     def func_wrap(func):
         def api_func_warper(*args, blocking=False, **kwargs):
             if not blocking:
-                t = threading.Thread(target=func, args=args, kwargs=kwargs)
+                t = threading.Thread(target=func, args=args, kwargs=kwargs,)
                 t.start()
                 return t
             else:
@@ -489,4 +489,4 @@ class ArduinoAPIWebsocketConsumer:
 
     def start_broadcast(self):
         self.broadcasting = True
-        threading.Thread(target=self.broadcast).start()
+        threading.Thread(target=self.broadcast,).start()

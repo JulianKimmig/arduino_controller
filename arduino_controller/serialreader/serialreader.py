@@ -86,8 +86,11 @@ class SerialReader:
     def run_in_background(self):
         if self.read_thread is not None:
             self.stop()
-        self.read_thread = threading.Thread(target=self.read_forever)
+        self.read_thread = threading.Thread(target=self.read_forever,)
         self.read_thread.start()
+
+    def __del__(self):
+        self.stop()
 
     def reactivate_port(self, port=None):
         if port is None:
@@ -225,6 +228,7 @@ class SerialReader:
                     "baudrate": self.config.get("portdata", port, "baud", default=9600),
                 }
             },
+
         )
         t.start()
 

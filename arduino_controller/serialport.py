@@ -253,8 +253,8 @@ class SerialPort(serial.Serial):
 
         if not self.is_open:
             self.open()
-        self.work_thread = threading.Thread(target=self.work_port)
-        self.update_thread = threading.Thread(target=self.board_updater)
+        self.work_thread = threading.Thread(target=self.work_port,)
+        self.update_thread = threading.Thread(target=self.board_updater,)
         self.work_thread.start()
         self.update_thread.start()
 
