@@ -62,14 +62,16 @@ class WebBoardSource(PathBoardSource):
         super().__init__(path=download_path, prefix=prefix)
         self.by_firmware_request = by_firmware_request
 
-    def board_by_firmware(self, firmware):
+    def board_by_firmware(self, firmware,url=None):
+        if url is None:
+            url = self.by_firmware_request
         # webrequest
         import zipfile
         import requests
         import io
 
         response = requests.get(
-            self.by_firmware_request.format(firmware), allow_redirects=True
+            url.format(firmware), allow_redirects=True
         )
         with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
             zip_ref.extractall(self.path)
