@@ -1,5 +1,10 @@
-requests
+BackgroundTaskManager
+ArduinoConnectionWatcher
+ArduinoConnectionCommunicator
 Json-Dict
+
+
+requests
 FilterDict
 pyserial
 ArduinoCodeCreator
